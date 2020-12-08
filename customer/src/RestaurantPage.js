@@ -19,15 +19,15 @@ function MenuItem(props) {
     return (
         <TouchableOpacity style={{ flexDirection: "row", justifyContent: "space-between", margin: 5 }} onPress={() => { Actions.mealDetail({ mealID: props.mealID, storeID: props.storeID }) }}>
             <View style={{ justifyContent: "space-between" }}>
-                <View style={{width:windowWidth-170}}>
+                <View style={{ width: windowWidth - 170 }}>
                     <Text style={styles.font}>{props.mealName}</Text>
                     <Text style={{ fontSize: 16, color: "#898989" }}>{props.description}</Text>
                 </View>
                 <Text style={{ fontSize: 18, marginVertical: 5 }}>${props.mealPrice}</Text>
             </View>
 
-            <View style={{alignSelf:"center"}}>
-                <Image source={{ uri: serverInfo.STORAGE_ADDRESS + props.img }} resizeMode="cover" style={{ width: 120, height: 70}} />
+            <View style={{ alignSelf: "center" }}>
+                <Image source={{ uri: serverInfo.STORAGE_ADDRESS + props.img }} resizeMode="cover" style={{ width: 120, height: 70 }} />
             </View>
 
         </TouchableOpacity>
@@ -151,6 +151,7 @@ export default class RestaurantPage extends React.Component {
 
             ],
             isUpdating: false,
+            isStoreOpen: true,
 
         };
     }
@@ -172,6 +173,7 @@ export default class RestaurantPage extends React.Component {
                     storeID: responseJson.storeID,
                     storeName: responseJson.storeName,
                     menu: responseJson.menu,
+                    isStoreOpen: responseJson.isStoreOpen,
                 })
             })
             .catch((error) => {
@@ -198,6 +200,7 @@ export default class RestaurantPage extends React.Component {
                     storeID: responseJson.storeID,
                     storeName: responseJson.storeName,
                     menu: responseJson.menu,
+                    isStoreOpen: responseJson.isStoreOpen
                 })
             })
             .catch((error) => {
@@ -218,7 +221,7 @@ export default class RestaurantPage extends React.Component {
                 >
                     <View style={{ flexDirection: "row", backgroundColor: '#FA5858', justifyContent: "space-between" }}>
                         <IconButton icon="arrow-left" size={30} color="#676767" onPress={() => { Actions.pop() }} />
-                        <Text style={styles.stroe}>{this.state.storeName}</Text>
+                        <Text style={styles.stroe}>{this.state.storeName}{(this.state.isStoreOpen) ? "" : "(閉店中)"}</Text>
                         <Text style={styles.stroe, { color: "#FA5858" }}>{this.state.storeName}</Text>
                     </View>
                     <View style={{ paddingHorizontal: 10 }} >

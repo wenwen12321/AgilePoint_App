@@ -133,7 +133,7 @@ export default class AccountManagement extends React.Component {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'Authorization': 'Basic ' + this.state.auth,
+                    'Authorization': 'Bearer ' + this.state.auth,
                 },
                 body: JSON.stringify(bodyData)
             })

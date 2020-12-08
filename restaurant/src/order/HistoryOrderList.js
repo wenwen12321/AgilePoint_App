@@ -13,6 +13,8 @@ import {
 import { Actions } from 'react-native-router-flux';
 import serverInfo from '../ServerInfo';
 import base64 from 'react-native-base64';
+import { IconButton } from 'react-native-paper';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 function OrderItem(props) {
 
@@ -59,7 +61,7 @@ function Order(props) {
             <View style={styles.cardView}>
 
                 <View style={styles.info}>
-                    <Text style={styles.font}>#{props.id}</Text>
+                    <Text style={styles.font}>#{props.orderNumber}</Text>
                     <Text style={styles.font}>{props.orderDate}</Text>
                 </View>
 
@@ -95,29 +97,35 @@ export default class HistoryOrderList extends React.Component {
             orderList: [],
             isNeedUpdate: false,
             isUpadting: false,
-            isLoggedIn: null,
+            isLoggedIn: false,
             auth: null,
             userID: null,
             storeID: null,
             timer: null,
+            dateInString: null,
+            date: null,
+            today: null,
+            isDatePickerVisible: false,
         }
     };
 
     componentDidMount() {
         this.getLoginSatus();
-        let timer = setInterval(this.tick, 20000);
-        this.setState({timer});
+        // let timer = setInterval(this.tick, 20000);
+        // this.setState({ timer });
 
     }
 
-    componentWillUnmount(){
-        clearInterval(this.state.timer);
+    // componentWillUnmount() {
+    //     clearInterval(this.state.timer);
+    // }
+
+    tick = () => {
+        this.getLoginSatus();
     }
 
-    tick = () =>{
-        this.setState({
-            isNeedUpdate: true,
-        })
+    covertToString = (d) => {
+        return d.getFullYear() + "-" + (((d.getMonth() + 1) > 9) ? "" : "0") + (d.getMonth() + 1) + "-" + ((d.getDate()) > 9 ? "" : "0") + d.getDate();
     }
 
     getLoginSatus = async () => {
@@ -131,6 +139,8 @@ export default class HistoryOrderList extends React.Component {
                 console.log(userID);
                 // console.log(auth);
                 console.log("not null");
+                var d = new Date();
+                var date = this.covertToString(d);
                 setTimeout(() => {
                     this.setState({
                         isLoggedIn: true,
@@ -139,6 +149,9 @@ export default class HistoryOrderList extends React.Component {
                         isNeedUpdate: true,
                         isUpdating: false,
                         storeID: storeID,
+                        dateInString: date,
+                        date: d,
+                        today: date
                     });
                 }, 0);
             }
@@ -184,12 +197,12 @@ export default class HistoryOrderList extends React.Component {
 
             setTimeout(() => { this.setState({ isUpadting: true }) }, 0);
             var address = serverInfo.SERVICE_ADDRESS;
-            address += "store/" + this.state.storeID + "/historyOrders";
+            address += "store/" + this.state.storeID + "/historyOrders?date=" + this.state.dateInString;
             console.log(address);
             fetch(address, {
                 method: 'GET',
                 headers: {
-                    "Authorization": ("Basic " + this.state.auth)
+                    "Authorization": ("Bearer " + this.state.auth)
                 }
             })
                 .then((response) => response.json())
@@ -207,31 +220,106 @@ export default class HistoryOrderList extends React.Component {
         }
     }
 
+    handleDateConfirm = (date) => {
+        console.log(date);
+        var now = new Date();
+        console.log(date - now);
+        if (date - now < 0) {
+
+            var dateInString = this.covertToString(date);
+
+            this.setState({
+                isDatePickerVisible: false,
+                dateInString: dateInString,
+                date: date,
+                isNeedUpdate: true,
+                isUpadting: false,
+            });
+        }
+        else {
+            this.setState({
+                isDatePickerVisible: false,
+                isNeedUpdate: true,
+                isUpadting: false,
+            });
+        }
+    }
+
+    handleBefore = () => {
+        var d = this.state.date;
+        d.setDate(d.getDate() - 1);
+        var dateInString = this.covertToString(d);
+        this.setState({
+            dateInString: dateInString,
+            date: d,
+            isNeedUpdate: true,
+            isUpadting: false,
+        });
+    }
+
+    handleAfter = () => {
+        var d = this.state.date;
+        d.setDate(d.getDate() + 1);
+        var dateInString = this.covertToString(d);
+        this.setState({
+            dateInString: dateInString,
+            date: d,
+            isNeedUpdate: true,
+            isUpadting: false,
+        });
+    }
+
     render() {
         console.log("render3~~");
         return (
-            <SafeAreaView style={{flex:1}}>
-            <View style={styles.order}>
-                {this.updateData()}
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    refreshControl={
-                        <RefreshControl refreshing={this.state.isUpadting} onRefresh={() => { this.setState({ isNeedUpdate: true }) }} />
-                    }
-                >
-                    {this.state.orderList.map(item => (
-                        <Order
-                            key={item.id}
-                            id={item.id}
-                            status={item.status}
-                            orderDate={item.orderDate}
-                            orderItems={item.orderItems}
-                            orderPrice={item.orderPrice}
-                            auth={this.state.auth}
-                        />
-                    ))}
-                </ScrollView>
-            </View>
+            <SafeAreaView style={{ flex: 1 }}>
+                <View style={styles.order}>
+                    {this.updateData()}
+                    <ScrollView
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        refreshControl={
+                            <RefreshControl refreshing={this.state.isUpadting} onRefresh={() => { this.setState({ isNeedUpdate: true }) }} />
+                        }
+                    >
+                        {(this.state.isLoggedIn) ?
+                            <View style={{ justifyContent: "center", flexDirection: "row", margin: 5 }}>
+                                <IconButton icon="chevron-left" onPress={() => this.handleBefore()} size={15} style={{ alignSelf: "center", marginRight: 10 }} />
+                                <TouchableOpacity style={{ alignSelf: "center" }} onPress={() => { this.setState({ isDatePickerVisible: true }) }}>
+                                    <Text>{this.state.dateInString}</Text>
+                                    <DateTimePickerModal
+                                        cancelTextIOS="取消"
+                                        confirmTextIOS="確認"
+                                        headerTextIOS="選擇日期"
+                                        isVisible={this.state.isDatePickerVisible}
+                                        mode="date"
+                                        onConfirm={(date) => this.handleDateConfirm(date)}
+                                        onCancel={() => { this.setState({ isDatePickerVisible: false }) }}
+                                    />
+                                </TouchableOpacity>
+                                <IconButton icon="chevron-right" onPress={() => this.handleAfter()} disabled={(this.state.dateInString === this.state.today)} size={15} style={{ alignSelf: "center", marginLeft: 10 }} />
+                            </View>
+                            :
+                            null
+                        }
+                        {(this.state.orderList.length) ?
+                            null
+                            :
+                            <Text style={{ color: "#9e9e9e", fontSize: 24, margin: 20, textAlign: "center" }}>查無資料</Text>
+                        }
+                        {this.state.orderList.map(item => (
+                            <Order
+                                key={item.id}
+                                id={item.id}
+                                orderNumber={item.orderNumber}
+                                status={item.status}
+                                orderDate={item.orderDate}
+                                orderItems={item.orderItems}
+                                orderPrice={item.orderPrice}
+                                auth={this.state.auth}
+                            />
+                        ))}
+                    </ScrollView>
+                </View>
             </SafeAreaView>
         )
     }

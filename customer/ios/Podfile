@@ -81,6 +81,7 @@ target 'customer' do
 
   pod 'RNSnackbar', :path => '../node_modules/react-native-snackbar'
 
+
   target 'customerTests' do
     inherit! :complete
     # Pods for testing

@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
-import { View, TouchableOpacity, StyleSheet, Alert, Image, ImageBackground, TouchableHighlight, ScrollView, AsyncStorage, SafeAreaView } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Alert, Image, ImageBackground, TouchableHighlight, ScrollView, AsyncStorage, SafeAreaView, Platform } from 'react-native';
 import { TextInput, Divider, Text, Switch, Button, Chip, IconButton } from 'react-native-paper';
 import { Actions } from 'react-native-router-flux';
 import { color } from 'react-native-reanimated';
 import serverInfo from '../ServerInfo';
 import { Toast, Root } from 'native-base';
 import base64 from 'react-native-base64';
+import FlagSecure from 'react-native-flag-secure-android';
+import { usePrivacySnapshot, enabled } from 'react-native-privacy-snapshot';
+import * as ScreenshotDetector from 'react-native-screenshot-detect';
 
 export default class ForgetPassword extends React.Component {
     constructor(props) {
@@ -16,7 +19,23 @@ export default class ForgetPassword extends React.Component {
         }
     }
 
-
+    componentDidMount() {
+        if (Platform.OS === "android") {
+            FlagSecure.activate();
+        }
+        else if (Platform.OS === "ios") {
+            enabled(true);
+            this.eventEmitter = ScreenshotDetector.subscribe(() => {
+                Alert.alert(
+                    "截圖告示",
+                    "剛剛已使用截圖功能，由於內容可能含有個人資料，請妥善保管截圖內容，謝謝",
+                    [
+                        { text: "好", onPress: () => { console.log("OK Pressed") } }
+                    ]
+                )
+            });
+        }
+    }
 
     goToLoginPage = () => {
         Actions.pop();
@@ -87,36 +106,36 @@ export default class ForgetPassword extends React.Component {
 
     render() {
         return (
-            <SafeAreaView style={{flex:1}}>
-            <Root>
-                <View style={{ flex: 1, padding: 10, justifyContent: "center" }}>
-                    <Text style={styles.title}>重設密碼</Text>
-                    <View style={{ marginBottom: 20 }}>
-                        <TextInput
-                            mode="outlined"
-                            label="Email"
-                            returnKeyType="next"
-                            value={this.state.email}
-                            onChangeText={text => this.setState({ email: text })}
-                            autoCapitalize="none"
-                            autoCompleteType="email"
-                            textContentType="emailAddress"
-                            keyboardType="email-address"
-                            error={!!this.state.emailError}
-                        />
-                        {this.state.emailError ? <Text style={styles.error}>{this.state.emailError}</Text> : null}
-                    </View>
+            <SafeAreaView style={{ flex: 1 }}>
+                <Root>
+                    <View style={{ flex: 1, padding: 10, justifyContent: "center" }}>
+                        <Text style={styles.title}>重設密碼</Text>
+                        <View style={{ marginBottom: 20 }}>
+                            <TextInput
+                                mode="outlined"
+                                label="Email"
+                                returnKeyType="next"
+                                value={this.state.email}
+                                onChangeText={text => this.setState({ email: text })}
+                                autoCapitalize="none"
+                                autoCompleteType="email"
+                                textContentType="emailAddress"
+                                keyboardType="email-address"
+                                error={!!this.state.emailError}
+                            />
+                            {this.state.emailError ? <Text style={styles.error}>{this.state.emailError}</Text> : null}
+                        </View>
 
 
-                    <Button labelStyle={styles.labelText} style={styles.button} mode="contained" onPress={() => this.resetPasswordPress()}>寄送重設密碼信</Button>
-                    {/* <Button style={styles.button} mode="outlined" onPress={this.goToRegisterPage()}>註冊</Button> */}
-                    <View style={styles.row}>
-                        <TouchableOpacity onPress={() => this.goToLoginPage()}>
-                            <Text style={{ fontWeight: "bold", color: "#878787" }}>←返回</Text>
-                        </TouchableOpacity>
+                        <Button labelStyle={styles.labelText} style={styles.button} mode="contained" onPress={() => this.resetPasswordPress()}>寄送重設密碼信</Button>
+                        {/* <Button style={styles.button} mode="outlined" onPress={this.goToRegisterPage()}>註冊</Button> */}
+                        <View style={styles.row}>
+                            <TouchableOpacity onPress={() => this.goToLoginPage()}>
+                                <Text style={{ fontWeight: "bold", color: "#878787" }}>←返回</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
-            </Root>
+                </Root>
             </SafeAreaView>
         )
     }

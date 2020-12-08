@@ -162,7 +162,7 @@ export default class EditMenu extends React.Component {
                         fetch(address, {
                             method: 'DELETE',
                             headers: {
-                                'Authorization': 'Basic ' + this.state.auth,
+                                'Authorization': 'Bearer ' + this.state.auth,
                             }
                         })
                             .then((response) => {
@@ -679,7 +679,7 @@ export default class EditMenu extends React.Component {
                 fetch(address, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': 'Basic ' + this.state.auth,
+                        'Authorization': 'Bearer ' + this.state.auth,
                     }
                 })
                     .catch((error) => {
@@ -699,7 +699,7 @@ export default class EditMenu extends React.Component {
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + this.state.auth,
+                        'Authorization': 'Bearer ' + this.state.auth,
                     },
                     body: JSON.stringify({
                         name: this.state.flavorsForPush[i].name,
@@ -730,7 +730,7 @@ export default class EditMenu extends React.Component {
                         headers: {
                             'Accept': 'application/json',
                             'Content-Type': 'application/json',
-                            'Authorization': 'Basic ' + this.state.auth,
+                            'Authorization': 'Bearer ' + this.state.auth,
                         },
                         body: JSON.stringify(flavorArr)
                     })
@@ -748,7 +748,7 @@ export default class EditMenu extends React.Component {
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + this.state.auth,
+                        'Authorization': 'Bearer ' + this.state.auth,
                     },
                     body: JSON.stringify({
                         name: this.state.flavorsForPush[i].name,
@@ -794,7 +794,7 @@ export default class EditMenu extends React.Component {
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'Authorization': 'Basic ' + this.state.auth,
+                'Authorization': 'Bearer ' + this.state.auth,
             },
             body: JSON.stringify(bodyData)
         })
@@ -931,7 +931,7 @@ export default class EditMenu extends React.Component {
                                 <View style={{ flexDirection: "row", alignContent: "center" }}>
                                     <IconButton style={{ flexGrow: 1, marginRight: -10, marginLeft: -5, alignSelf: "center", alignItems: "center" }} icon="delete" size={20} color="#fa223b" onPress={() => this._removeFlavor(flavor, flavorIndex)} />
                                     <IconButton style={{ flexGrow: 1, alignSelf: "center" }} icon="pencil" size={20} color="#676767" onPress={() => { this.showEditFlavorDialog(true, flavor.name, flavor.isMultiple, flavor.isRequired, flavorIndex) }} />
-                                    <Text style={{ flexGrow: 2, justifyContent: "flex-start", width: 60, marginRight: 2, alignSelf: "center" }}>{flavor.name}</Text>
+                                    <Text adjustsFontSizeToFit={true} style={{ flexGrow: 2, justifyContent: "flex-start", width: 60, marginRight: 2, alignSelf: "center" }}>{flavor.name}</Text>
                                 </View>
                                 {/* <IconButton style={{ paddingLeft: -20, justifyContent: "center", alignSelf: "center", alignItems: "center" }} icon="delete" size={20} color="#fa223b" onPress={() => this._removeFlavor(flavor, flavorIndex)} />
                                 <Text style={{ justifyContent: "flex-start", width: 60, marginRight: 2, alignSelf: "center" }}>{flavor.name}</Text>
@@ -950,7 +950,7 @@ export default class EditMenu extends React.Component {
                         ))}
                         <IconButton style={{ alignItems: "center" }} icon="plus-circle-outline" size={20} color="#7b7b7b" onPress={() => this.showDialog(true)} />
                     </View>
-                    <View style={styles.divider}>
+                    <View style={{marginHorizontal:10,justifyContent:"center",marginTop:10}}>
                         <Divider />
                     </View>
 
@@ -961,7 +961,7 @@ export default class EditMenu extends React.Component {
                         </View>
                     </TouchableRipple>
 
-                    <View style={styles.divider}>
+                    <View style={{marginHorizontal:10,justifyContent:"center"}}>
                         <Divider />
                     </View>
 
@@ -972,7 +972,7 @@ export default class EditMenu extends React.Component {
                         </View>
                     </TouchableRipple>
 
-                    <View style={styles.divider}>
+                    <View style={{marginHorizontal:10,justifyContent:"center", marginBottom:10}}>
                         <Divider />
                     </View>
 
@@ -1137,7 +1137,7 @@ const styles = StyleSheet.create({
 
     root: {
         // paddingTop:5,
-        padding: 10
+        paddingVertical: 10
     },
 
     divider: {
@@ -1154,7 +1154,7 @@ const styles = StyleSheet.create({
 
     titleText: {
         fontSize: 30,
-        paddingLeft: 20,
+        paddingLeft: 5,
         paddingTop: 10
     },
 
@@ -1180,7 +1180,8 @@ const styles = StyleSheet.create({
     todaySpecialGroup: {
         flexDirection: "row",
         justifyContent: "space-between",
-        paddingHorizontal: 20
+        paddingHorizontal: 20,
+        marginVertical:10
     },
 
     imageGroup: {

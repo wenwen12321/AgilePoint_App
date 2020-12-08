@@ -65,14 +65,17 @@ export default class ChoosingGame extends React.Component {
         })
         .then((response) => response.json())
         .then((responseJson) => {
-            console.log(responseJson)
+            console.log(responseJson);
+            if(this.state.storeID===responseJson.storeID){
+                this.choosingGameForStore();
+            }
             this.setState({
                 storeID: responseJson.storeID,
                 storeName: responseJson.storeName,
                 //img: responseJson.img,
-                img: 'https://lh5.ggpht.com/_o9h1grcT4Ok/SUTsgdKnhhI/AAAAAAAAA3g/kAWEcrYQKms/s400/CIMG1856.JPG',
+                img: responseJson.img,
                 subtitle: responseJson.subtitle,
-                //memo: responseJson.memo
+                memo: responseJson.memo
             });
         })
     }
@@ -88,12 +91,16 @@ export default class ChoosingGame extends React.Component {
         .then((responseJson) => {
             console.log(responseJson);
             //console.log(responseJson.mealName);
+            if(this.state.mealID===responseJson.mealID){
+                this.choosingGameForMeal();
+            }
             this.setState({
                 storeID: responseJson.storeID,
-                //storeName: responseJson.storeName,  
+                storeName: responseJson.storeName,  
                 img: responseJson.img,
                 mealID: responseJson.mealID,
                 mealName: responseJson.mealName,
+                memo: responseJson.memo
             })
         }) 
     }
@@ -132,21 +139,29 @@ export default class ChoosingGame extends React.Component {
 
                 <View style={styles.toolRow}>
                   {/* choosingGame for meal */}
-                <TouchableOpacity style={{ backgroundColor: "orange", width: 160, borderRadius: 30, margin: 10, }} onPress={this.toggleModal} >
-                    <Text style={{ padding: 15, fontSize: 15, color: 'white' }}>
+                {(this.props.isMealShow)?
+                <TouchableOpacity style={{ backgroundColor: "orange", flexGrow:1, borderRadius: 30, margin: 10, }} onPress={this.toggleModal} >
+                    <Text adjustsFontSizeToFit={true} style={{ padding: 15, fontSize: 15, color: 'white', alignSelf:"center" }}>
                         {/* <FontAwesomeIcon icon={faGift} size={20} color="white" /> */}
                         <Icon name="gift" size={20} />
                     &nbsp;今天吃什麼?
                     </Text>
                 </TouchableOpacity>
+                :
+                null
+                }
 
                   {/* choosingGame for restaurant */}
-                  <TouchableOpacity style={{ backgroundColor: "brown", width: 160, borderRadius: 30, margin: 10, }} onPress={this.toggleModalFR} >
-                    <Text style={{ padding: 15, fontSize: 15, color: 'white' }}>
+                {(this.props.isStoreShow)?
+                  <TouchableOpacity style={{ backgroundColor: "brown", flexGrow:1, borderRadius: 30, margin: 10, }} onPress={this.toggleModalFR} >
+                    <Text adjustsFontSizeToFit={true} style={{ padding: 15, fontSize: 15, color: 'white', alignSelf:"center" }}>
                         <Icon name="gift" size={20} />
                     &nbsp;今天吃哪間?
                     </Text>
                 </TouchableOpacity>
+                :
+                null
+                }
                 </View>
 
                 {/* choosingGame Modal for meal */}
@@ -166,10 +181,10 @@ export default class ChoosingGame extends React.Component {
                                 <Text style={styles.cardTitle}>{this.state.foodlist[this.state.RandomNumber]['storeName']}</Text>
                                 <Text style={styles.cardAddress}>第一學生餐廳</Text>
                                 <Text style={styles.cardMemo}>{this.state.foodlist[this.state.RandomNumber]['memo']}</Text> */}
-                                <Image style={{ height: 200, resizeMode: "cover" }} source={{ uri: this.state.foodlist[this.state.RandomNumber]['img'] }} />
+                                <Image style={{ height: 200, resizeMode: "cover" }} source={{ uri: serverInfo.STORAGE_ADDRESS + this.state.img }} />
                                 <Text style={styles.cardTitle}>{this.state.mealName}</Text>
-                                <Text style={styles.cardAddress}>{this.state.subtitle}</Text>
-                                <Text style={styles.cardMemo}>{this.state.foodlist[this.state.RandomNumber]['memo']}</Text>
+                                <Text style={styles.cardAddress}>{this.state.storeName}</Text>
+                                <Text style={styles.cardMemo}>{this.state.memo}</Text>
                             </View>
 
                             <View style={styles.buttonView}>
@@ -201,10 +216,10 @@ export default class ChoosingGame extends React.Component {
                                 <Text style={styles.cardTitle}>{this.state.foodlist[this.state.RandomNumber]['storeName']}</Text>
                                 <Text style={styles.cardAddress}>第一學生餐廳</Text>
                                 <Text style={styles.cardMemo}>{this.state.foodlist[this.state.RandomNumber]['memo']}</Text> */}
-                                <Image style={{ height: 200, resizeMode: "cover" }} source={{ uri: this.state.img}} />
+                                <Image style={{ height: 200, resizeMode: "cover" }} source={{ uri: serverInfo.STORAGE_ADDRESS + this.state.img}} />
                                 <Text style={styles.cardTitle}>{this.state.storeName}</Text>
                                 <Text style={styles.cardAddress}>{this.state.subtitle}</Text>
-                                <Text style={styles.cardMemo}>{this.state.foodlist[this.state.RandomNumber]['memo']}</Text>
+                                <Text style={styles.cardMemo}>{this.state.memo}</Text>
                             </View>
 
                             <View style={styles.buttonView}>

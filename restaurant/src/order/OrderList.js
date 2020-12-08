@@ -18,6 +18,7 @@ import { Actions } from 'react-native-router-flux';
 import CurrentOrderList from './CurrentOrderList';
 import HistoryOrderList from './HistoryOrderList';
 import serverInfo from '../ServerInfo';
+import PushNotification from 'react-native-push-notification';
 
 export default class OrderList extends React.Component {
 
@@ -163,6 +164,20 @@ export default class OrderList extends React.Component {
     //         { cancelable: false });
     //     return true;
     // }
+
+    componentDidMount(){
+        PushNotification.createChannel(
+            {
+              channelId: "4654", // (required)
+              channelName: "My channel", // (required)
+              channelDescription: "A channel to categorise your notifications", // (optional) default: undefined.
+              soundName: "default", // (optional) See `soundName` parameter of `localNotification` function
+              importance: 4, // (optional) default: 4. Int value of the Android notification importance
+              vibrate: true, // (optional) default: true. Creates the default vibration patten if true.
+            },
+            (created) => console.log(`createChannel returned '${created}'`) // (optional) callback returns whether the channel was created, false means it already existed.
+          );
+    }
 
     render() {
         console.log("render~~");

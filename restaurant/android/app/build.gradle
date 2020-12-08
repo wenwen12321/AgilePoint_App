@@ -139,6 +139,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     splits {
         abi {
@@ -208,6 +209,8 @@ dependencies {
     implementation "com.facebook.react:react-native:+"  // From node_modules
 
     implementation project(':react-native-cardview')
+
+    implementation project(':react-native-push-notification')
 
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
 

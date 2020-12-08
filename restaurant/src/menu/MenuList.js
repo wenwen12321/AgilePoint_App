@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { List, Checkbox, Switch, Divider, Title, Text, IconButton, Colors } from 'react-native-paper';
+import { List, Checkbox, Switch, Divider, Title, Text, IconButton, Colors, TouchableRipple } from 'react-native-paper';
 import { Button, View, Alert, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, AsyncStorage, SafeAreaView } from 'react-native';
 import { Actions } from 'react-native-router-flux';
 import { ActionSheet, Root, Toast } from 'native-base';
@@ -106,16 +106,17 @@ export default class MenuList extends React.Component {
                 //     ]
                 // }
             ],
-            isNeedUpdate: true,
+            isNeedUpdate: false,
             isUpdating: false,
-            isLoggedIn: true,
+            isLoggedIn: false,
             auth: null,
             userID: null,
+            isStoreOpen: true,
         }
     }
 
     componentDidMount() {
-        this.getLoginSatus();
+        this.getLoginSatus().done();
     }
 
     getLoginSatus = async () => {
@@ -219,7 +220,7 @@ export default class MenuList extends React.Component {
                                     headers: {
                                         'Accept': 'application/json',
                                         'Content-Type': 'application/json',
-                                        'Authorization': 'Basic ' + this.state.auth,
+                                        'Authorization': 'Bearer ' + this.state.auth,
                                     },
                                     body: JSON.stringify({
                                         mealSoldOut: false
@@ -245,7 +246,7 @@ export default class MenuList extends React.Component {
                                     headers: {
                                         'Accept': 'application/json',
                                         'Content-Type': 'application/json',
-                                        'Authorization': 'Basic ' + this.state.auth,
+                                        'Authorization': 'Bearer ' + this.state.auth,
                                     },
                                     body: JSON.stringify({
                                         mealSoldOut: true
@@ -369,7 +370,7 @@ export default class MenuList extends React.Component {
                         fetch(address, {
                             method: 'DELETE',
                             headers: {
-                                'Authorization': 'Basic ' + this.state.auth,
+                                'Authorization': 'Bearer ' + this.state.auth,
                             }
                         })
                             .then((response) => {
@@ -423,7 +424,7 @@ export default class MenuList extends React.Component {
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + this.state.auth,
+                        'Authorization': 'Bearer ' + this.state.auth,
                     },
                     body: JSON.stringify({
                         menuTypeID: idList[value]
@@ -481,6 +482,7 @@ export default class MenuList extends React.Component {
                 });
             })
             var address = serverInfo.SERVICE_ADDRESS;
+            let menuList = [];
             address += (this.state.storeID + "/meals");
             console.log(address);
             fetch(address, {
@@ -489,7 +491,6 @@ export default class MenuList extends React.Component {
                 .then((response) => response.json())
                 .then((responseJson) => {
                     console.log(responseJson);
-                    let menuList = [];
                     for (var i = 0; i < responseJson.length; i++) {
 
                         menuList.push({
@@ -499,9 +500,70 @@ export default class MenuList extends React.Component {
                             items: responseJson[i].items
                         });
                     }
+                })
+                .then(()=>{
+                    
+                    address = serverInfo.SERVICE_ADDRESS;
+                    address += (this.state.storeID + "/menuType");
+                    console.log(address);
+                    fetch(address, {
+                        method: 'GET',
+                    })
+                        .then((response) => response.json())
+                        .then((responseJson) => {
+                            console.log(responseJson);
+                            for (var i = 0; i < responseJson.length; i++) {
+                                var flag = 0;
+                                // console.log(menuList);
+                                for(var j=0;j<menuList.length;j++){
+                                    if(responseJson[i].menuTypeID===menuList[j].id){
+                                        // console.log(responseJson[i].menuTypeID);
+                                        flag = 1;
+                                    }
+                                }
+    
+                                if(!flag){
+                                    menuList.push({
+                                        id: responseJson[i].menuTypeID,
+                                        type: responseJson[i].menuTypeName,
+                                        expanded: true,
+                                        items: []
+                                    });
+                                }
+        
+                                
+                            }
+                            setTimeout(() => {
+                                this.setState({
+                                    menuList: menuList
+                                });
+                            }, 0)
+                        })
+                        .catch((error) => {
+                            console.log(error);
+                        })
+                })
+                .catch((error) => {
+                    console.log(error);
+                })
+
+
+            address = serverInfo.SERVICE_ADDRESS;
+            address += (this.state.storeID + "/storeInfo");
+            console.log(address);
+            fetch(address, {
+                method: 'GET',
+            })
+                .then((response) => response.json())
+                .then((responseJson) => {
+                    console.log(responseJson);
+                    var status = false;
+                    if(responseJson.isStoreOpen){
+                        status = true;
+                    }
                     setTimeout(() => {
                         this.setState({
-                            menuList: menuList
+                            isStoreOpen: status
                         });
                     }, 0)
                 })
@@ -514,66 +576,114 @@ export default class MenuList extends React.Component {
                             isNeedUpdate: false,
                             isUpdating: false
                         });
-                    });
+                    },0);
                 });
         }
     }
 
+    handleStoreOpen = () => {
+        var status = this.state.isStoreOpen;
+        status = !status;
+        setTimeout(()=>{this.setState({ isStoreOpen: status, isLoading: true })},0);
+        var address = serverInfo.SERVICE_ADDRESS;
+        address += (this.state.storeID + "/storeStatus");
+        console.log(address);
+        console.log("status:"+this.state.isStoreOpen);
+        fetch(address, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + this.state.auth,
+            },
+            body: JSON.stringify({
+                isOpen: status
+            })
+        })
+            .then((response) => {
+                console.log(response);
+                if (response.ok) {
+                    setTimeout(() => { this.setState({ isUpdating: false }) }, 0);
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+            .finally(()=>{
+                this.setState({isNeedUpdate: true});
+            });
+    }
+
     render() {
         return (
-            <SafeAreaView style={{flex:1}}>
-            <Root style={{ flex: 1 }}>
-                {this.updateData()}
-                <View style={styles.title}>
-                    <Text style={styles.titleText}>菜單列表</Text>
-                    <IconButton icon="tune" color={Colors.black} size={30} onPress={() => Actions.editMenu()} />
-                </View>
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    refreshControl={
-                        <RefreshControl refreshing={this.state.isUpdating} onRefresh={() => { this.setState({ isNeedUpdate: true }) }} enabled={true} />
+            <SafeAreaView style={{ flex: 1 }}>
+                <Root style={{ flex: 1 }}>
+                    {this.updateData()}
+                    <View style={styles.title}>
+                        <Text style={styles.titleText}>菜單列表</Text>
+                        <IconButton icon="tune" color={Colors.black} size={30} onPress={() => Actions.editMenu()} />
+                    </View>
+                    {(this.state.isLoggedIn) ?
+                        <>
+                            <Divider />
+                            <TouchableRipple onPress={() => this.handleStoreOpen()}>
+                                {/* <Switch value={this.state.isStoreOpen} onValueChange={() => this.handleStoreOpen()} /> */}
+                                <View style={styles.nameAndPrice}>
+                                    <Text style={{ alignSelf: "center", fontSize:20 }}>開店狀態</Text>
+                                    <Switch style={{ alignSelf: "center" }} value={this.state.isStoreOpen} onValueChange={() => this.handleStoreOpen()} />
+                                </View>
+                            </TouchableRipple>
+                            <Divider />
+                        </>
+                        :
+                        null
                     }
-                >
+                    <ScrollView
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        refreshControl={
+                            <RefreshControl refreshing={this.state.isUpdating} onRefresh={() => { this.setState({ isNeedUpdate: true }) }} enabled={true} />
+                        }
+                    >
 
-                    <List.Section>
-
-
-                        {this.state.menuList.map(item => (
-                            <List.Accordion
-                                title={item.type}
-                                titleStyle={styles.typeText}
-                                left={props => <List.Icon {...props} icon="folder" />}
-                                expanded={item.expanded}
-                                onPress={() =>
-                                    this._handlePress(item.id)}
-                            >
-                                {item.items.map(food => (
-                                    <TouchableOpacity onPress={() => { this._handleFoodPress(item, food) }}>
+                        <List.Section>
 
 
-                                        <View>
-                                            {this.renderItemGroup(item, food)}
-                                            <View style={styles.menuItem}>
+                            {this.state.menuList.map(item => (
+                                <List.Accordion
+                                    title={item.type}
+                                    titleStyle={styles.typeText}
+                                    left={props => <List.Icon {...props} icon="folder" />}
+                                    expanded={item.expanded}
+                                    onPress={() =>
+                                        this._handlePress(item.id)}
+                                >
+                                    {item.items.map(food => (
+                                        <TouchableOpacity onPress={() => { this._handleFoodPress(item, food) }}>
 
-                                                {/* <View style={styles.itemNameGroup}>
+
+                                            <View>
+                                                {this.renderItemGroup(item, food)}
+                                                <View style={styles.menuItem}>
+
+                                                    {/* <View style={styles.itemNameGroup}>
                                                     <Switch value={food.checked} onValueChange={() => this._onToggleSwitch(item.id, food.id)} />
                                                     <Text style={this._itemNameStyle(food.checked)}> {food.name} {food.checked === false ? "(未上架)" : ""}</Text>
                                                 </View> */}
 
-                                                {/* <Text style={this._itemPriceStyle(food.checked)}>${food.price}</Text> */}
+                                                    {/* <Text style={this._itemPriceStyle(food.checked)}>${food.price}</Text> */}
 
+                                                </View>
+                                                <Divider />
                                             </View>
-                                            <Divider />
-                                        </View>
-                                    </TouchableOpacity>
+                                        </TouchableOpacity>
 
-                                ))}
+                                    ))}
 
-                            </List.Accordion>
-                        ))}
-                    </List.Section>
-                </ScrollView>
-            </Root>
+                                </List.Accordion>
+                            ))}
+                        </List.Section>
+                    </ScrollView>
+                </Root>
             </SafeAreaView>
         );
     }
@@ -616,11 +726,18 @@ const styles = StyleSheet.create({
 
     titleText: {
         fontSize: 30,
-        paddingLeft: 20,
+        paddingLeft: 10,
         paddingTop: 10
     },
 
     typeText: {
         fontSize: 15
-    }
+    },
+
+    nameAndPrice: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        marginVertical: 5,
+    },
 });

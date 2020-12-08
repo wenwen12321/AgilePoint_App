@@ -131,7 +131,7 @@ export default class AccountSetting extends React.Component {
                         </View>
                     </TouchableRipple>
                     <Divider />
-                    <TouchableRipple onPress={() => { Actions.changePassword({ email: this.state.email, auth: this.state.auth }) }} rippleColor="rgba(0,0,0,0.2)">
+                    {/* <TouchableRipple onPress={() => { Actions.changePassword({ email: this.state.email, auth: this.state.auth }) }} rippleColor="rgba(0,0,0,0.2)">
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                             <View style={{ margin: 10, alignItems: "center", flexDirection: "row" }}>
                                 <Icon style={{ marginRight: 10 }} color="#272acb" size={30} name="key-outline" />
@@ -140,8 +140,8 @@ export default class AccountSetting extends React.Component {
                             <Icon style={{ marginRight: 10, alignSelf: "center" }} color="#575757" size={30} name="chevron-right" />
                         </View>
                     </TouchableRipple>
-                    <Divider />
-                    <TouchableRipple onPress={() => Actions.accountManagement({ userID: this.state.userID, auth: this.state.auth, userName:this.state.id, imageUri: this.state.imageUri, email: this.state.email})} rippleColor="rgba(0,0,0,0.2)">
+                    <Divider /> */}
+                    <TouchableRipple onPress={() => Actions.accountManagement({ userID: this.state.userID, auth: this.state.auth, userName: this.state.id, imageUri: this.state.imageUri, email: this.state.email })} rippleColor="rgba(0,0,0,0.2)">
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                             <View style={{ margin: 10, alignItems: "center", flexDirection: "row" }}>
                                 <Icon style={{ marginRight: 10 }} color="#4e80ff" size={30} name="account-box-outline" />
@@ -158,43 +158,44 @@ export default class AccountSetting extends React.Component {
 
     render() {
         return (
-            <SafeAreaView style={{flex:1}}>
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                {/* <Text style={styles.titleText}>帳戶</Text> */}
-                {/*<PersonalProfile />*/}
-                <View style={{ justifyContent: "space-between", flex: 1 }}>
-                    <View>
-                        <LinearGradient colors={['#4761ea', '#7f91f1']}>
-                            <View style={{ flexDirection: "row" }}>
-                                <TouchableRipple
-                                    rippleColor="rgba(0,0,0,0.2)"
-                                    style={{
-                                        borderWidth: 1,
-                                        borderColor: 'rgba(0,0,0,0)',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        width: 60,
-                                        height: 60,
-                                        backgroundColor: '#c3c3c3',
-                                        borderRadius: 50,
-                                        alignSelf: "center",
-                                        marginLeft: 10
-                                    }}
-                                >
-                                    {(this.state.imageUri) ?
-                                        <Image style={{ alignSelf: "center", width: 60, height: 60, borderRadius: 50, resizeMode: "cover" }} source={{ uri: this.state.imageUri }} />
-                                        :
-                                        <Icon style={{ alignSelf: "center" }} name="account" size={50} color="#fff" />
-                                    }
-                                </TouchableRipple>
-                                <Text style={styles.greeting}>{(this.state.id)?(this.state.id):"您好，使用者！"}</Text>
-                            </View>
-                        </LinearGradient>
-                        {this.renderSettingButton()}
+            <SafeAreaView style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                    {/* <Text style={styles.titleText}>帳戶</Text> */}
+                    {/*<PersonalProfile />*/}
+                    <View style={{ justifyContent: "space-between", flex: 1 }}>
+                        <View>
+                            <LinearGradient colors={['#4761ea', '#7f91f1']}>
+                                <View style={{ flexDirection: "row" }}>
+                                    <TouchableOpacity
+                                        rippleColor="rgba(0,0,0,0.2)"
+                                        style={{
+                                            borderWidth: 1,
+                                            borderColor: 'rgba(0,0,0,0)',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: 60,
+                                            height: 60,
+                                            backgroundColor: '#c3c3c3',
+                                            borderRadius: 50,
+                                            alignSelf: "center",
+                                            marginLeft: 10
+                                        }}
+                                        onPress={() => Actions.accountManagement({ userID: this.state.userID, auth: this.state.auth, userName: this.state.id, imageUri: this.state.imageUri, email: this.state.email })}
+                                    >
+                                        {(this.state.imageUri) ?
+                                            <Image style={{ alignSelf: "center", width: 60, height: 60, borderRadius: 50, resizeMode: "cover" }} source={{ uri: this.state.imageUri }} />
+                                            :
+                                            <Icon style={{ alignSelf: "center" }} name="account" size={50} color="#fff" />
+                                        }
+                                    </TouchableOpacity>
+                                    <Text style={styles.greeting}>{(this.state.id) ? (this.state.id) : "您好，使用者！"}</Text>
+                                </View>
+                            </LinearGradient>
+                            {this.renderSettingButton()}
+                        </View>
+                        {this.renderLogoutButton()}
                     </View>
-                    {this.renderLogoutButton()}
-                </View>
-            </ScrollView>
+                </ScrollView>
             </SafeAreaView>
         );
     }

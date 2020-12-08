@@ -16,17 +16,20 @@ import { Actions } from 'react-native-router-flux';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardTitle, CardContent, CardAction, CardButton, CardImage } from 'react-native-material-cards';
-import { Divider } from 'react-native-paper';
+import { Button, Divider } from 'react-native-paper';
 import ChoosingGame from './component/ChoosingGame';
 import Carousel from 'react-native-banner-carousel';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import PushNotification from 'react-native-push-notification';
+import { Alert } from 'react-native';
+import analytics from '@react-native-firebase/analytics';
 
 function Restaurant(props) {
   // console.log(props);
   return (
     <TouchableOpacity onPress={() => { Actions.restaurantPage({ storeID: props.id }) }}>
-      <View><Image style={{ width: 120, height: 70, resizeMode: "cover" }} source={{ uri: props.img }} /></View>
+      <View><Image style={{ width: 120, height: 70, resizeMode: "cover" }} source={{ uri: serverInfo.STORAGE_ADDRESS + "store/" + props.img }} /></View>
       <Text>{props.name}</Text>
     </TouchableOpacity>
   )
@@ -89,7 +92,7 @@ class SpecialRestaurant extends React.Component {
 function HabitFood(props) {
   return (
     <TouchableOpacity onPress={() => { Actions.mealDetail({ storeID: props.storeID, mealID: props.mealID }) }}>
-      <View><Image source={{ uri: props.img }} style={{ width: 120, height: 70, resizeMode: "cover" }} /></View>
+      <View><Image source={{ uri: serverInfo.STORAGE_ADDRESS + props.img }} style={{ width: 120, height: 70, resizeMode: "cover" }} /></View>
       <Text>{props.name}</Text>
     </TouchableOpacity>
   )
@@ -189,7 +192,8 @@ class CardViewList extends React.Component {
           <TouchableOpacity onPress={() => { Actions.restaurantPage({ storeID: item.storeID }) }}>
             <Card>
               <CardImage
-                source={{ uri: item.img }}
+                resizeMode="cover"
+                source={{ uri: serverInfo.STORAGE_ADDRESS + "store/" + item.img }}
               />
               <CardTitle
                 title={item.storeName}
@@ -199,11 +203,11 @@ class CardViewList extends React.Component {
               <CardAction
                 separator={true}
                 inColumn={false}>
-                <CardButton
+                {/* <CardButton
                   onPress={() => { Actions.restaurantPage({ storeID: item.storeID }) }}
                   title="收藏"
                   color="blue"
-                />
+                /> */}
                 <CardButton
                   onPress={() => { Actions.restaurantPage({ storeID: item.storeID }) }}
                   title="餐廳資訊 >"
@@ -224,149 +228,150 @@ export default class Main2 extends React.Component {
     this.state = {
       isUpdating: false,
       isNeedUpdate: true,
-      componentArr: [
-        {
-          type: 4,
-          data: [
-            {
-              act: "link",
-              img: "https://i.imgur.com/MmV8VTn.png",
-              url: "https://google.com"
-            },
-            {
-              act: "scene",
-              img: "https://i.imgur.com/3V9rSpP.jpg",
-              sceneName: "todaySpecial"
-            },
-            {
-              act: "scene",
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              sceneName: "mealDetail",
-              prop: {
-                storeID: 1,
-                mealID: 1
-              }
-            }
-          ]
-        },
-        {
-          type: 0,
-          title: '精選餐廳',
-          data: [
-            {
-              id: 1,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              name: "通化粉圓冰品"
-            },
-            {
-              id: 2,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              name: "好喝珍奶"
-            },
-          ]
-        },
-        {
-          type: 1,
-          title: '永遠吃不膩',
-          data: [
-            {
-              storeID: 1,
-              mealID: 1,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              name: "好吃拉麵"
-            },
-            {
-              id: 2,
-              mealID: 4,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              name: "好吃拉麵"
-            },
-          ]
-        },
-        {
-          type: 3,
-          title: '餐點人氣排行',
-          data: [
-            {
-              storeID: 1,
-              mealID: 1,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              mealName: "好吃拉麵",
-              storeName: "store1",
-              description: "超好吃的拉麵!!"
-            },
-            {
-              storeID: 1,
-              mealID: 1,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              mealName: "好吃拉麵",
-              storeName: "store1",
-              description: "超好吃的拉麵!!"
-            },
-            {
-              storeID: 1,
-              mealID: 1,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              mealName: "好吃拉麵",
-              storeName: "store1",
-              description: "超好吃的拉麵!!"
-            },
-            {
-              storeID: 1,
-              mealID: 1,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              mealName: "好吃拉麵",
-              storeName: "store1",
-              description: "超好吃的拉麵!!"
-            },
-            {
-              storeID: 1,
-              mealID: 1,
-              img: "https://i.imgur.com/gSwhoIJ.jpg",
-              mealName: "好吃拉麵",
-              storeName: "store1",
-              description: "超好吃的拉麵!!"
-            },
-          ]
-        },
-        {
-          type: 2,
-          data: [
-            {
-              img: 'https://i.imgur.com/gSwhoIJ.jpg',
-              subtitle: '第一學生餐廳',
-              storeName: '老王牛肉麵',
-              storeID: '1',
-              memo: '台北CP值超高平價牛肉麵 || 只要129元起'
-            },
-            {
-              img: 'https://cdn.walkerland.com.tw/images/upload/subject/2019/12/59108c83df7d408c34161d0999da946c16d40193.jpg',
-              subtitle: '第一學生餐廳',
-              storeName: '好吃拉麵',
-              storeID: '1',
-              memo: '東京最夯人氣拉麵 || 不排隊吃不到'
-            },
-          ]
-        }
-      ]
+      componentArr: [],
+      // componentArr: [
+      //   {
+      //     type: 4,
+      //     data: [
+      //       {
+      //         act: "link",
+      //         img: "https://i.imgur.com/MmV8VTn.png",
+      //         url: "https://google.com"
+      //       },
+      //       {
+      //         act: "scene",
+      //         img: "https://i.imgur.com/3V9rSpP.jpg",
+      //         sceneName: "todaySpecial"
+      //       },
+      //       {
+      //         act: "scene",
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         sceneName: "mealDetail",
+      //         prop: {
+      //           storeID: 1,
+      //           mealID: 1
+      //         }
+      //       }
+      //     ]
+      //   },
+      //   {
+      //     type: 0,
+      //     title: '精選餐廳',
+      //     data: [
+      //       {
+      //         id: 1,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         name: "通化粉圓冰品"
+      //       },
+      //       {
+      //         id: 2,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         name: "好喝珍奶"
+      //       },
+      //     ]
+      //   },
+      //   {
+      //     type: 1,
+      //     title: '永遠吃不膩',
+      //     data: [
+      //       {
+      //         storeID: 1,
+      //         mealID: 1,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         name: "好吃拉麵"
+      //       },
+      //       {
+      //         id: 2,
+      //         mealID: 4,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         name: "好吃拉麵"
+      //       },
+      //     ]
+      //   },
+      //   {
+      //     type: 3,
+      //     title: '餐點人氣排行',
+      //     data: [
+      //       {
+      //         storeID: 1,
+      //         mealID: 1,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         mealName: "好吃拉麵",
+      //         storeName: "store1",
+      //         description: "超好吃的拉麵!!"
+      //       },
+      //       {
+      //         storeID: 1,
+      //         mealID: 1,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         mealName: "好吃拉麵",
+      //         storeName: "store1",
+      //         description: "超好吃的拉麵!!"
+      //       },
+      //       {
+      //         storeID: 1,
+      //         mealID: 1,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         mealName: "好吃拉麵",
+      //         storeName: "store1",
+      //         description: "超好吃的拉麵!!"
+      //       },
+      //       {
+      //         storeID: 1,
+      //         mealID: 1,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         mealName: "好吃拉麵",
+      //         storeName: "store1",
+      //         description: "超好吃的拉麵!!"
+      //       },
+      //       {
+      //         storeID: 1,
+      //         mealID: 1,
+      //         img: "https://i.imgur.com/gSwhoIJ.jpg",
+      //         mealName: "好吃拉麵",
+      //         storeName: "store1",
+      //         description: "超好吃的拉麵!!"
+      //       },
+      //     ]
+      //   },
+      //   {
+      //     type: 2,
+      //     data: [
+      //       {
+      //         img: 'https://i.imgur.com/gSwhoIJ.jpg',
+      //         subtitle: '第一學生餐廳',
+      //         storeName: '老王牛肉麵',
+      //         storeID: '1',
+      //         memo: '台北CP值超高平價牛肉麵 || 只要129元起'
+      //       },
+      //       {
+      //         img: 'https://cdn.walkerland.com.tw/images/upload/subject/2019/12/59108c83df7d408c34161d0999da946c16d40193.jpg',
+      //         subtitle: '第一學生餐廳',
+      //         storeName: '好吃拉麵',
+      //         storeID: '1',
+      //         memo: '東京最夯人氣拉麵 || 不排隊吃不到'
+      //       },
+      //     ]
+      //   }
+      // ]
     }
   }
 
-  componentDidMount (){
-    var address = serverInfo.SERVICE_ADDRESS;
-    address += "main";
-    console.log(address);
-    fetch(address, {
-      method: 'GET',
-    })
-    .then((response) => response.json)
-    .then((responseJson) => {
-        console.log(responseJson);
-        this.setState({
-          
-        })
-    })
-  }
+  // componentDidMount() {
+  //   var address = serverInfo.SERVICE_ADDRESS;
+  //   address += "main";
+  //   console.log(address);
+  //   fetch(address, {
+  //     method: 'GET',
+  //   })
+  //     .then((response) => response.json)
+  //     .then((responseJson) => {
+  //       console.log(responseJson);
+  //       this.setState({
+
+  //       })
+  //     })
+  // }
 
   renderComponent = (cIndex) => {
     if (this.state.componentArr[cIndex].type === 0) {
@@ -407,7 +412,7 @@ export default class Main2 extends React.Component {
               {this.state.componentArr[cIndex].data.map((item, index) => (
                 <TouchableOpacity style={{ margin: 2 }} onPress={() => Actions.mealDetail({ mealID: item.mealID, storeID: item.storeID })}>
                   <View style={{ flexDirection: "row" }}>
-                    <Image style={{ height: 80, width: 80, resizeMode: "cover" }} source={{ uri: item.img }} />
+                    <Image style={{ height: 80, width: 80, resizeMode: "cover" }} source={{ uri: serverInfo.STORAGE_ADDRESS + item.img }} />
                     <View style={{ flexDirection: "row" }}>
                       <Text style={{ marginHorizontal: 8, fontWeight: "bold" }}>{index + 1}</Text>
                       <View style={{ alignContent: "center" }}>
@@ -428,7 +433,7 @@ export default class Main2 extends React.Component {
     else if (this.state.componentArr[cIndex].type === 4) {
       return (
         <>
-          <View style={{ margin: 10, flex:1 }}>
+          <View style={{ margin: 10, flex: 1 }}>
             <Carousel
               autoplay
               autoplayTimeout={3000}
@@ -436,11 +441,30 @@ export default class Main2 extends React.Component {
               index={0}
               pageSize={Dimensions.get('window').width - 20}
             >
-              {this.state.componentArr[cIndex].data.map((item, index) =>  this.renderCarousel(item, index) )}
+              {this.state.componentArr[cIndex].data.map((item, index) => this.renderCarousel(item, index))}
             </Carousel>
           </View>
         </>
       )
+    }
+    else if (this.state.componentArr[cIndex].type === 5) {
+      Alert.alert(
+        this.state.componentArr[cIndex].title,
+        this.state.componentArr[cIndex].msg,
+        [
+          {
+            text: "確定",
+            onPress: () => console.log("confirm pressed")
+          }
+        ],
+        { cancelable: true }
+      )
+    }
+    else if (this.state.componentArr[cIndex].type === 6) {
+      <ChoosingGame
+        isMealShow={this.state.componentArr[cIndex].isMealShow}
+        isStoreShow={this.state.componentArr[cIndex].isStoreShow}
+      />
     }
   };
 
@@ -451,23 +475,23 @@ export default class Main2 extends React.Component {
       return (
         <View key={index}>
           <TouchableWithoutFeedback onPress={() => { Linking.openURL(item.url) }}>
-            <Image style={{ resizeMode: "cover", height:200, width:bannerWidth }} source={{ uri: item.img }} />
+            <Image style={{ resizeMode: "cover", height: 200, width: bannerWidth }} source={{ uri: item.img }} />
           </TouchableWithoutFeedback>
         </View>
       )
     }
     else if (item.act === "img") {
       return (
-        <View style={{flex:1}} key={index}>
-          <Image style={{ height:200, width:bannerWidth, resizeMode: "cover"}} source={{ uri: item.img }} />
+        <View style={{ flex: 1 }} key={index}>
+          <Image style={{ height: 200, width: bannerWidth, resizeMode: "cover" }} source={{ uri: item.img }} />
         </View>
       )
     }
     else if (item.act === "scene") {
       return (
-        <View style={{flex:1}} key={index}>
+        <View style={{ flex: 1 }} key={index}>
           <TouchableWithoutFeedback onPress={() => { Actions.push(item.sceneName, item.prop) }}>
-            <Image style={{  height:200, width:bannerWidth, resizeMode: "cover" }} source={{ uri: item.img }} />
+            <Image style={{ height: 200, width: bannerWidth, resizeMode: "cover" }} source={{ uri: item.img }} />
           </TouchableWithoutFeedback>
         </View>
       )
@@ -475,6 +499,20 @@ export default class Main2 extends React.Component {
   }
 
   componentDidMount() {
+
+    analytics().logEvent('main');
+
+    PushNotification.createChannel(
+      {
+        channelId: "4654", // (required)
+        channelName: "My channel", // (required)
+        channelDescription: "A channel to categorise your notifications", // (optional) default: undefined.
+        soundName: "default", // (optional) See `soundName` parameter of `localNotification` function
+        importance: 4, // (optional) default: 4. Int value of the Android notification importance
+        vibrate: true, // (optional) default: true. Creates the default vibration patten if true.
+      },
+      (created) => console.log(`createChannel returned '${created}'`) // (optional) callback returns whether the channel was created, false means it already existed.
+    );
 
     setTimeout(() => {
       this.setState({
@@ -490,7 +528,34 @@ export default class Main2 extends React.Component {
           isUpdating: true,
         })
       }, 0);
+
       var address = serverInfo.SERVICE_ADDRESS;
+      address += ("customer/versionNumber");
+      console.log(address);
+      fetch(address, {
+        method: 'GET',
+      })
+        .then((response) => response.json())
+        .then((responseJson) => {
+          if (serverInfo.VERSION_NUMBER < responseJson.versionNumber) {
+            Alert.alert(
+              "有新版本可用",
+              responseJson.msg,
+              [
+                {
+                  text: "更新",
+                  onPress: () => Linking.openURL(responseJson.url)
+                }
+              ],
+              { cancelable: responseJson.cancelable }
+            );
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+
+      address = serverInfo.SERVICE_ADDRESS;
       address += ("main");
       console.log(address);
       fetch(address, {
@@ -522,6 +587,33 @@ export default class Main2 extends React.Component {
   //   })
   // };
 
+  handleNotify = () => {
+    for (var i = 0; i < 5; i++) {
+
+      PushNotification.localNotification({
+        /* Android Only Properties */
+        channelId: "4654",
+        subText: "This is a subText",
+        largeIcon: "",
+
+        /* iOS and Android properties */
+        title: "My Notification Title", // (optional)
+        message: "My Notification Message", // (required)
+      });
+    }
+  }
+
+  handleScheduledNotify = () => {
+    PushNotification.localNotificationSchedule({
+      channelId: "4654",
+      //... You can use all the options from localNotifications
+      title: "My Notification Title", // (optional)
+      message: "My Notification Message", // (required)
+      date: new Date(Date.now() + 10 * 1000), // in 10 secs
+      allowWhileIdle: false, // (optional) set notification to work while on doze, default: false
+    });
+  }
+
   render() {
     const window = Dimensions.get("window").height;
     { this.updateData() }
@@ -529,11 +621,12 @@ export default class Main2 extends React.Component {
       <SafeAreaView style={{ flex: 1, flexDirection: 'column', backgroundColor: '#ECECEE' }}>
 
         {/*        searchBar View       */}
+        {/* <Button onPress={()=>this.handleNotify()}>notify</Button> */}
         <TouchableOpacity style={{ marginBottom: 5 }} onPress={() => { Actions.searchPage() }}>
           <View style={{ backgroundColor: "#E5E7E9" }}>
             <Text style={{ backgroundColor: "#BDC3C7", padding: 15, margin: 10, fontSize: 17, color: '#86939e', borderRadius: 10 }}>
               {/* <FontAwesomeIcon style={{ color: '#86939e' }} icon={faSearch} />   */}
-              <Icon name="search" size={20}/> &nbsp;
+              <Icon name="search" size={20} /> &nbsp;
               請輸入餐廳或餐點
               </Text>
           </View>
@@ -545,7 +638,10 @@ export default class Main2 extends React.Component {
           }
         >
 
-          <ChoosingGame />
+          <ChoosingGame 
+            isMealShow={true}
+            isStoreShow={true}
+          />
 
           {this.state.componentArr.map((component, cIndex) => (
             <>{this.renderComponent(cIndex)}</>

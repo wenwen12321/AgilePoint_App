@@ -113,6 +113,9 @@ export default class EditMenu extends React.Component {
             isLoggedIn: true,
             auth: null,
             userID: null,
+            isEditTypeDialogVisible: false,
+            itemID: null,
+            itemName: null,
         }
     }
 
@@ -252,7 +255,9 @@ export default class EditMenu extends React.Component {
                         console.log(address);
                         fetch(address, {
                             method: 'DELETE',
-                            'Authorization': 'Basic ' + this.state.auth,
+                            headers: {
+                                'Authorization': 'Bearer ' + this.state.auth,
+                            }
                         })
                             .then((response) => {
                                 if (response.ok) {
@@ -297,7 +302,7 @@ export default class EditMenu extends React.Component {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'Authorization': 'Basic ' + this.state.auth,
+                    'Authorization': 'Bearer ' + this.state.auth,
                 },
                 body: JSON.stringify({
                     MenuTypeName: inputText
@@ -341,6 +346,7 @@ export default class EditMenu extends React.Component {
             })
             var address = serverInfo.SERVICE_ADDRESS;
             address += (this.state.storeID + "/meals");
+            let menuList = [];
             console.log(address);
             fetch(address, {
                 method: 'GET',
@@ -348,7 +354,6 @@ export default class EditMenu extends React.Component {
                 .then((response) => response.json())
                 .then((responseJson) => {
                     console.log(responseJson);
-                    let menuList = [];
                     for (var i = 0; i < responseJson.length; i++) {
 
                         menuList.push({
@@ -358,11 +363,47 @@ export default class EditMenu extends React.Component {
                             items: responseJson[i].items
                         });
                     }
-                    setTimeout(() => {
-                        this.setState({
-                            menuList: menuList
-                        });
-                    }, 0)
+                })
+                .then(()=>{
+                    address = serverInfo.SERVICE_ADDRESS;
+                    address += (this.state.storeID + "/menuType");
+                    console.log(address);
+                    fetch(address, {
+                        method: 'GET',
+                    })
+                        .then((response) => response.json())
+                        .then((responseJson) => {
+                            console.log(responseJson);
+                            for (var i = 0; i < responseJson.length; i++) {
+                                var flag = 0;
+                                // console.log(menuList);
+                                for(var j=0;j<menuList.length;j++){
+                                    if(responseJson[i].menuTypeID===menuList[j].id){
+                                        // console.log(responseJson[i].menuTypeID);
+                                        flag = 1;
+                                    }
+                                }
+    
+                                if(!flag){
+                                    menuList.push({
+                                        id: responseJson[i].menuTypeID,
+                                        type: responseJson[i].menuTypeName,
+                                        expanded: true,
+                                        items: []
+                                    });
+                                }
+        
+                                
+                            }
+                            setTimeout(() => {
+                                this.setState({
+                                    menuList: menuList
+                                });
+                            }, 0)
+                        })
+                        .catch((error) => {
+                            console.log(error);
+                        })
                 })
                 .catch((error) => {
                     console.log(error);
@@ -382,9 +423,104 @@ export default class EditMenu extends React.Component {
         Actions.reset('menuList');
     }
 
+    _handleEditTypeName = (id, typeName) => {
+        setTimeout(()=>{this.setState({itemID: id, itemName: typeName})},0);
+        this.showEditTypeDialog(true);
+    }
+
+    _deleteTypeNamePress = (id, typeName) => {
+        Alert.alert(
+            "確定要刪除類別嗎?",
+            "此動作將永久刪除以下餐點:" + typeName + "\n且會連帶刪除該類別下所有餐點",
+            [
+                {
+                    text: "取消",
+                    onPress: () => console.log("cancel"),
+                    style: "cancel"
+                },
+                {
+                    text: "確定",
+                    onPress: () => {
+                        var address = serverInfo.SERVICE_ADDRESS;
+                        address += (this.state.storeID + "/menuType/" + id);
+                        console.log(address);
+                        fetch(address, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': 'Bearer ' + this.state.auth,
+                            }
+                        })
+                            .then((response) => {
+                                console.log(response);
+                                if (response.ok) {
+                                    Toast.show({
+                                        text: typeName + "類別已刪除",
+                                        type: "danger"
+                                    })
+                                }
+                            })
+                            .catch((error) => {
+                                console.log(error);
+                                Toast.show({
+                                    text: "發生錯誤：" + error,
+                                    type: "danger"
+                                })
+                            })
+                            .finally(() => {
+                                setTimeout(() => {
+                                    this.setState({ isNeedUpdate: true });
+                                }, 0);
+                            });;
+
+                    }
+                }
+            ],
+            { cancelable: true }
+        );
+    }
+
+    showEditTypeDialog = (isShow) => {
+        this.setState({isEditTypeDialogVisible:isShow});
+        if(!isShow){
+            setTimeout(()=>{this.setState({itemID: null, itemName: null})},0);
+        }
+    }
+
+    editType = (inputText) => {
+        var itemID = this.state.itemID;
+        this.showEditTypeDialog(false);
+        if (inputText !== "") {
+            var address = serverInfo.SERVICE_ADDRESS;
+            address += (this.state.storeID + "/menuType");
+            console.log(address);
+            fetch(address, {
+                method: 'PUT',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.state.auth,
+                },
+                body: JSON.stringify({
+                    menuTypeID: itemID,
+                    menuTypeName: inputText
+                })
+            })
+                .catch((error) => {
+                    console.log(error);
+                })
+                .finally(() => {
+                    setTimeout(() => {
+                        this.setState({
+                            isNeedUpdate: true,
+                        });
+                    }, 0);
+                });
+        }
+    }
+
     render() {
         return (
-            // <Root>
+            <Root>
             <SafeAreaView style={{flex:1}}>
             <ScrollView
                 refreshControl={
@@ -399,14 +535,26 @@ export default class EditMenu extends React.Component {
                     </View>
                     {this.state.menuList.map(item => (
                         // <TouchableOpacity onLongPress={() => this._handleLongPress(item.id)}>
-                        <List.Accordion
+                        <>
+                        <View style={{marginTop:5}}>
+                            <Divider/>
+                        </View>
+                        <View style={{flexDirection:"row", margin:10, justifyContent:"space-between"}}>
+                            <View style={{flexDirection:"row"}}>
+                                <Text style={{fontSize:20, alignSelf:"center", marginLeft:5}}>{item.type}</Text>
+                                <IconButton icon="pencil" style={styles.deleteIcon} size={25} color="#676767" onPress={()=>this._handleEditTypeName(item.id, item.type)} />
+                            </View>
+                            <IconButton style={styles.deleteIcon} icon="delete" color="#fa223b" size={28} onPress={() => this._deleteTypeNamePress(item.id, item.type)} />
+                        </View>
+                        {/* <List.Accordion
                             title={item.type}
                             titleStyle={styles.typeText}
                             left={props => <List.Icon {...props} icon="folder" />}
                             expanded={item.expanded}
                             onPress={() =>
                                 this._handlePress(item.id)}
-                        >
+                        > */}
+                        <View style={{marginLeft:25}}>
                             {item.items.map((food) => (
                                 <View>
                                     <View style={styles.menuItem}>
@@ -418,7 +566,7 @@ export default class EditMenu extends React.Component {
                                             <IconButton style={styles.deleteIcon} icon="delete" color="#fa223b" size={28} onPress={() => this._deletePress(item, food)} />
                                         </View>
                                     </View>
-                                    <Divider />
+                                    <Divider style={{paddingRight:20}} />
                                 </View>
                             ))}
                             <View style={styles.addButton}>
@@ -426,7 +574,9 @@ export default class EditMenu extends React.Component {
                                     新增餐點
                                     </Button>
                             </View>
-                        </List.Accordion>
+                        </View>
+                        {/* </List.Accordion> */}
+                        </>
                         // </TouchableOpacity>
                     ))}
                 </List.Section>
@@ -445,9 +595,20 @@ export default class EditMenu extends React.Component {
                     cancelText={"取消"}
                 >
                 </DialogInput>
+                <DialogInput
+                    isDialogVisible={this.state.isEditTypeDialogVisible}
+                    title={"修改類別"}
+                    message={"請輸入要修改的類別"}
+                    submitInput={(inputText) => { this.editType(inputText) }}
+                    closeDialog={() => { this.showEditTypeDialog(false) }}
+                    submitText={"確認"}
+                    cancelText={"取消"}
+                    initValueTextInput={this.state.itemName}
+                >
+                </DialogInput>
             </ScrollView>
             </SafeAreaView>
-            // </Root>
+            </Root>
         );
     }
 }
@@ -492,7 +653,7 @@ const styles = StyleSheet.create({
 
     titleText: {
         fontSize: 30,
-        paddingLeft: 20,
+        paddingLeft: 10,
         paddingTop: 10
     },
 
@@ -509,7 +670,8 @@ const styles = StyleSheet.create({
     },
 
     addButton: {
-        paddingRight: 20
+        paddingRight: 20,
+        marginVertical: 5
     },
 
     addTypeButton: {

@@ -1,11 +1,15 @@
 import React, { Component } from 'react';
-import { View, TouchableOpacity, StyleSheet, Alert, Image, ImageBackground, TouchableHighlight, ScrollView, AsyncStorage, SafeAreaView } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Alert, Image, ImageBackground, TouchableHighlight, ScrollView, AsyncStorage, SafeAreaView, Platform } from 'react-native';
 import { TextInput, Divider, Text, Switch, Button, Chip, IconButton } from 'react-native-paper';
 import { Actions } from 'react-native-router-flux';
 import { color } from 'react-native-reanimated';
 import serverInfo from '../ServerInfo';
 import { Toast, Root } from 'native-base';
 import base64 from 'react-native-base64';
+import FlagSecure from 'react-native-flag-secure-android';
+import { enabled } from 'react-native-privacy-snapshot';
+import * as ScreenshotDetector from 'react-native-screenshot-detect';
+import jwt_decode from 'jwt-decode'
 
 export default class Login extends React.Component {
     constructor(props) {
@@ -19,7 +23,33 @@ export default class Login extends React.Component {
         }
     }
 
+    componentDidMount() {
+        if (Platform.OS === "android") {
+            FlagSecure.activate();
+        }
+        else if (Platform.OS === "ios") {
+            enabled(true);
+            this.eventEmitter = ScreenshotDetector.subscribe(() => {
+                Alert.alert(
+                    "截圖告示",
+                    "剛剛已使用截圖功能，由於內容可能含有個人資料，請妥善保管截圖內容，謝謝",
+                    [
+                        { text: "好", onPress: () => { console.log("OK Pressed") } }
+                    ]
+                )
+            });
+        }
+    }
 
+    componentWillUnmount() {
+        if (Platform.OS === "android") {
+            FlagSecure.deactivate();
+        }
+        else if (Platform.OS === "ios") {
+            enabled(false);
+            ScreenshotDetector.unsubscribe(this.eventEmitter);
+        }
+    }
 
     goToRegisterPage = () => {
         if (this.state.previous === "register") {
@@ -90,23 +120,30 @@ export default class Login extends React.Component {
             .then((response) => response.json())
             .then((responseJson) => {
                 console.log(responseJson);
-                if (responseJson.message === 'Invalid credentials') {
-                    Toast.show({
-                        text: "登入失敗",
-                        type: "danger"
-                    });
-                }
-                else if (responseJson.store_id.length == 0) {
+                if (!responseJson.success) {
                     Toast.show({
                         text: "登入失敗",
                         type: "danger"
                     });
                 }
                 else {
-                    console.log("response user id"+responseJson.user.id);
-                    console.log("response user name"+responseJson.user.name);
-                    this.setStorage(responseJson.user.id, responseJson.user.name, responseJson.store_id[0], responseJson.user.UserAvatarPath).done();
 
+                    var decoded = jwt_decode(responseJson.token);
+                    console.log(decoded);
+
+                    if (decoded.store.length == 0) {
+                        Toast.show({
+                            text: "登入失敗",
+                            type: "danger"
+                        });
+                    }
+                    else {
+
+                        this.setStorage(decoded.user_id, decoded.user_name, decoded.store[0].store_id, decoded.user_avatar, decoded.user_role, responseJson.token).done();
+
+                        // this.setStorage(responseJson.user.id, responseJson.user.name, responseJson.store_id[0], responseJson.user.UserAvatarPath, responseJson.user.role).done();
+
+                    }
                 }
             })
             .catch((error) => {
@@ -116,16 +153,17 @@ export default class Login extends React.Component {
 
     }
 
-    setStorage = async (userID, username, storeID, avatar) => {
+    setStorage = async (userID, username, storeID, avatar, role, auth) => {
         try {
             await AsyncStorage.setItem('@User:loginStatus', 'loggedin');
-            const auth = base64.encode(this.state.email + ":" + this.state.password);
+            // const auth = base64.encode(this.state.email + ":" + this.state.password);
             await AsyncStorage.setItem('@User:email', this.state.email);
             await AsyncStorage.setItem('@User:authorization', auth);
             await AsyncStorage.setItem('@User:userID', userID.toString());
             await AsyncStorage.setItem('@User:storeID', storeID.toString());
             await AsyncStorage.setItem('@User:username', username);
             await AsyncStorage.setItem('@User:avatar', avatar);
+            await AsyncStorage.setItem('@User:role', role.toString());
         } catch (error) {
             console.log(error);
         } finally {
@@ -137,58 +175,58 @@ export default class Login extends React.Component {
 
     render() {
         return (
-            <SafeAreaView style={{flex:1}}>
-            <Root>
-                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                    <IconButton icon="arrow-left" size={30} color="#676767" onPress={() => { Actions.pop() }} />
-                    <View style={{ flex: 1, padding: 10, justifyContent: "center" }}>
-                        <Text style={styles.title}>登入帳號</Text>
-                        <View style={{ marginBottom: 20 }}>
-                            <TextInput
-                                mode="outlined"
-                                label="Email"
-                                returnKeyType="next"
-                                value={this.state.email}
-                                onChangeText={text => this.setState({ email: text })}
-                                autoCapitalize="none"
-                                autoCompleteType="email"
-                                textContentType="emailAddress"
-                                keyboardType="email-address"
-                                error={!!this.state.emailError}
-                            />
-                            {this.state.emailError ? <Text style={styles.error}>{this.state.emailError}</Text> : null}
-                        </View>
-                        <View>
-                            <TextInput
-                                mode="outlined"
-                                label="密碼"
-                                returnKeyType="done"
-                                value={this.state.password}
-                                autoCapitalize="none"
-                                onChangeText={text => this.setState({ password: text })}
-                                error={!!this.state.passwordError}
-                                secureTextEntry
-                            />
-                            {this.state.passwordError ? <Text style={styles.error}>{this.state.passwordError}</Text> : null}
-                        </View>
-                        <View style={styles.forgotPassword}>
-                            <TouchableOpacity
-                                onPress={() => this.goToForgot()}
-                            >
-                                <Text style={{ color: "#878787" }}>忘記密碼?</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <Button labelStyle={styles.labelText} style={styles.button} mode="contained" onPress={() => this.loginPress()}>登入</Button>
-                        {/* <Button style={styles.button} mode="outlined" onPress={this.goToRegisterPage()}>註冊</Button> */}
-                        {/* <View style={styles.row}>
+            <SafeAreaView style={{ flex: 1 }}>
+                <Root>
+                    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                        <IconButton icon="arrow-left" size={30} color="#676767" onPress={() => { Actions.pop() }} />
+                        <View style={{ flex: 1, padding: 10, justifyContent: "center" }}>
+                            <Text style={styles.title}>登入帳號</Text>
+                            <View style={{ marginBottom: 20 }}>
+                                <TextInput
+                                    mode="outlined"
+                                    label="Email"
+                                    returnKeyType="next"
+                                    value={this.state.email}
+                                    onChangeText={text => this.setState({ email: text })}
+                                    autoCapitalize="none"
+                                    autoCompleteType="email"
+                                    textContentType="emailAddress"
+                                    keyboardType="email-address"
+                                    error={!!this.state.emailError}
+                                />
+                                {this.state.emailError ? <Text style={styles.error}>{this.state.emailError}</Text> : null}
+                            </View>
+                            <View>
+                                <TextInput
+                                    mode="outlined"
+                                    label="密碼"
+                                    returnKeyType="done"
+                                    value={this.state.password}
+                                    autoCapitalize="none"
+                                    onChangeText={text => this.setState({ password: text })}
+                                    error={!!this.state.passwordError}
+                                    secureTextEntry
+                                />
+                                {this.state.passwordError ? <Text style={styles.error}>{this.state.passwordError}</Text> : null}
+                            </View>
+                            <View style={styles.forgotPassword}>
+                                <TouchableOpacity
+                                    onPress={() => this.goToForgot()}
+                                >
+                                    <Text style={{ color: "#878787" }}>忘記密碼?</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <Button labelStyle={styles.labelText} style={styles.button} mode="contained" onPress={() => this.loginPress()}>登入</Button>
+                            {/* <Button style={styles.button} mode="outlined" onPress={this.goToRegisterPage()}>註冊</Button> */}
+                            {/* <View style={styles.row}>
                         <Text style={{ color: "#878787" }}>還沒有帳號? </Text>
                         <TouchableOpacity onPress={() => this.goToRegisterPage()}>
                             <Text style={{ fontWeight: "bold", color: "#8249d1" }}>註冊</Text>
                         </TouchableOpacity>
                     </View> */}
-                    </View>
-                </ScrollView>
-            </Root>
+                        </View>
+                    </ScrollView>
+                </Root>
             </SafeAreaView>
         )
     }

@@ -6,7 +6,7 @@ import UIStepper from 'react-native-ui-stepper';
 import { Toast, Root } from 'native-base';
 import serverInfo from './ServerInfo';
 import Lightbox from 'react-native-lightbox';
-
+import analytics from '@react-native-firebase/analytics';
 
 
 export default class EditMenu extends React.Component {
@@ -33,6 +33,7 @@ export default class EditMenu extends React.Component {
                     foodIsSoldOut: responseJson.foodIsSoldOut,
                     imageUri: serverInfo.STORAGE_ADDRESS + responseJson.imageUri,
                     storeName: responseJson.storeName,
+                    isStoreOpen: responseJson.isStoreOpen,
 
                 })
             })
@@ -135,6 +136,8 @@ export default class EditMenu extends React.Component {
 
             requiredNum: 0,
 
+            isStoreOpen: false,
+
         }
     }
 
@@ -208,6 +211,10 @@ export default class EditMenu extends React.Component {
                     });
                 }, 0);
             }
+            await analytics().logEvent('mealDetail',{
+                isLoggedIn:this.state.isLoggedIn,
+                mealID: this.state.mealID
+            })
         }
         catch (error) {
             console.log(error);
@@ -252,7 +259,7 @@ export default class EditMenu extends React.Component {
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        "Authorization": "Basic " + this.state.auth
+                        "Authorization": "Bearer " + this.state.auth
                     },
                     body: JSON.stringify({
                         storeID: this.state.storeID,
@@ -326,6 +333,7 @@ export default class EditMenu extends React.Component {
                     foodIsSoldOut: responseJson.foodIsSoldOut,
                     imageUri: serverInfo.STORAGE_ADDRESS + responseJson.imageUri,
                     storeName: responseJson.storeName,
+                    isStoreOpen: responseJson.isStoreOpen,
 
                 })
             })
@@ -347,11 +355,11 @@ export default class EditMenu extends React.Component {
                 if (responseJson.flavors.length != 0) {
                     let flavor = [];
 
-                    if (responseJson.flavors[i].isRequired) {
-                        requiredCount++;
-                    }
 
                     for (var i = 0; i < responseJson.flavors.length; i++) {
+                        if (responseJson.flavors[i].isRequired) {
+                            requiredCount++;
+                        }
                         let item = [];
                         for (var j = 0; j < responseJson.flavors[i].items.length; j++) {
                             item.push({
@@ -395,7 +403,7 @@ export default class EditMenu extends React.Component {
                     </View>
 
                     <View style={{ justifyContent: "space-between", alignItems: "center", flexDirection: "row", paddingHorizontal: 20, marginBottom: 5 }}>
-                        <Text style={{ fontSize: 22 }}>口味調整</Text>
+                        <Text style={{ fontSize: 22 }}>口味調整<Text style={{ fontSize: 12 }}>(<Text style={{ color: "#f00", fontSize: 12 }}>*</Text>表必填欄位)</Text></Text>
                     </View>
                 </>
             )
@@ -407,79 +415,82 @@ export default class EditMenu extends React.Component {
         const windowWidth = Dimensions.get("window").width;
 
         return (
-            <SafeAreaView style={{flex:1}}>
-            <Root>
+            <SafeAreaView style={{ flex: 1 }}>
+                <Root>
 
-                <ScrollView
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={this.state.isUpdating}
-                            onRefresh={() => { this.updateData() }} />
-                    }
-                >
-                    <View style={styles.root}>
-                        <View style={styles.title}>
-                            <IconButton icon="arrow-left" size={30} color="#676767" onPress={() => { Actions.pop() }} />
-                            <Text style={styles.titleText}>{this.state.storeName}</Text>
-                        </View>
-                        <Lightbox underlayColor="rgba(255,255,255,0)" backgroundColor="rgba(0,0,0,0.7)">
-                            <View style={styles.imageGroup}>
-                                <ImageBackground style={{ backgroundColor: "#d7d7d7", width: "100%", height: "100%" }} resizeMode="cover" source={{ uri: this.state.imageUri }}>
-                                </ImageBackground>
+                    <ScrollView
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={this.state.isUpdating}
+                                onRefresh={() => { this.updateData() }} />
+                        }
+                    >
+                        <View style={styles.root}>
+                            <View style={styles.title}>
+                                <IconButton icon="arrow-left" size={30} color="#676767" onPress={() => { Actions.pop() }} />
+                                <Text style={styles.titleText}>{this.state.storeName}</Text>
                             </View>
-                            {/* <Image style={{ backgroundColor: "#d7d7d7", width: "100%", height: 250 }} resizeMode="cover" source={{ uri: this.state.imageUri }} /> */}
-                        </Lightbox>
-                        {/* <TouchableHighlight activeOpacity={0.85} underlayColor="#ffffff" onPress={() => { this._imagePress() }}>
+                            <Lightbox underlayColor="rgba(255,255,255,0)" backgroundColor="rgba(0,0,0,0.7)">
+                                <View style={styles.imageGroup}>
+                                    <ImageBackground style={{ backgroundColor: "#d7d7d7", width: "100%", height: "100%" }} resizeMode="cover" source={{ uri: this.state.imageUri }}>
+                                    </ImageBackground>
+                                </View>
+                                {/* <Image style={{ backgroundColor: "#d7d7d7", width: "100%", height: 250 }} resizeMode="cover" source={{ uri: this.state.imageUri }} /> */}
+                            </Lightbox>
+                            {/* <TouchableHighlight activeOpacity={0.85} underlayColor="#ffffff" onPress={() => { this._imagePress() }}>
                             <View style={styles.imageGroup}>
                                 <ImageBackground style={{ backgroundColor: "#d7d7d7", width: "100%", height: "100%" }} resizeMode="cover" source={{ uri: this.state.imageUri }}>
                                 </ImageBackground>
                             </View>
                         </TouchableHighlight> */}
-                        <View style={styles.nameAndPrice}>
-                            <Text style={{ fontSize: 28 }}>{this.state.foodName}</Text>
-                            <Text style={{ fontSize: 28 }}>$ {this.state.foodPrice}</Text>
-                        </View>
-                        <View style={styles.nameAndPrice}>
-                            <Text style={{width:windowWidth-200}}>{this.state.foodDescription}</Text>
-                            {(this.state.calories) ?
-                                <Text style={{ alignSelf: "flex-end" }}>熱量：{this.state.calories} kcal</Text>
-                                :
-                                <></>
-                            }
+                            <View style={styles.nameAndPrice}>
+                                <Text style={{ fontSize: 28 }}>{this.state.foodName}</Text>
+                                <Text style={{ fontSize: 28 }}>$ {this.state.foodPrice}</Text>
+                            </View>
+                            <View style={styles.nameAndPrice}>
+                                <Text style={{ width: windowWidth - 200 }}>{this.state.foodDescription}</Text>
+                                {(this.state.calories) ?
+                                    <Text style={{ alignSelf: "flex-end" }}>熱量：{this.state.calories} kcal</Text>
+                                    :
+                                    <></>
+                                }
 
-                        </View>
+                            </View>
 
-                        {this.renderFlavorSection()}
+                            {this.renderFlavorSection()}
 
-                        {/* <View style={styles.divider}>
+                            {/* <View style={styles.divider}>
                             <Divider />
                         </View>
 
                         <View style={{ justifyContent: "space-between", alignItems: "center", flexDirection: "row", paddingHorizontal: 20, marginBottom: 5 }}>
                             <Text style={{ fontSize: 22 }}>口味調整</Text>
                         </View> */}
-                        <View style={styles.flavorGroup}>
-                            {this.state.flavors.map((flavor, flavorIndex) => (
+                            <View style={styles.flavorGroup}>
+                                {this.state.flavors.map((flavor, flavorIndex) => (
 
-                                <View style={styles.flavor}>
-                                    <Text style={{ justifyContent: "flex-start", width: 60, fontSize: 18, marginRight: 2, alignSelf: "center" }}>{flavor.name}{(flavor.isRequired) ? <Text style={{ color: "#f00" }}>*</Text> : ""}</Text>
-                                    <ScrollView horizontal={true}>
-                                        <View style={{ flexDirection: "row" }}>
-                                            {flavor.items.map((item, index) => (
-                                                <View style={{ alignSelf: "center", marginRight: 3, marginVertical: 2 }}>
-                                                    <Chip onPress={() => this._handleChipPress(flavorIndex, index)} selected={item.selected}>{item.name}{(item.extraPrice > 0) ? (" + $" + item.extraPrice) : ""}</Chip>
-                                                </View>
-                                            ))}
+                                    <View style={styles.flavor}>
+                                        <View style={{ alignSelf: "center" }}>
+                                            <Text adjustsFontSizeToFit={true} style={{ justifyContent: "flex-start", width: 80, fontSize: 18, marginRight: 2, alignSelf: "center" }}>{flavor.name}{(flavor.isRequired) ? <Text style={{ color: "#f00" }}>*</Text> : ""}</Text>
+                                            {(flavor.isMultiple) ? <Text style={{ color: "#9e9e9e", fontSize: 12 }}>(可複選)</Text> : <></>}
                                         </View>
-                                    </ScrollView>
-                                </View>
-                            ))}
-                        </View>
-                        <View style={styles.divider}>
-                            <Divider />
-                        </View>
+                                        <ScrollView horizontal={true}>
+                                            <View style={{ flexDirection: "row" }}>
+                                                {flavor.items.map((item, index) => (
+                                                    <View style={{ alignSelf: "center", marginRight: 3, marginVertical: 2 }}>
+                                                        <Chip onPress={() => this._handleChipPress(flavorIndex, index)} selected={item.selected}>{item.name}{(item.extraPrice > 0) ? (" + $" + item.extraPrice) : ""}</Chip>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        </ScrollView>
+                                    </View>
+                                ))}
+                            </View>
+                            <View style={styles.divider}>
+                                <Divider />
+                            </View>
 
-                        {/* <View style={{ justifyContent: "space-between", alignItems: "center", flexDirection: "row", paddingHorizontal: 20 }}>
+                            {/* <View style={{ justifyContent: "space-between", alignItems: "center", flexDirection: "row", paddingHorizontal: 20 }}>
                             <Text style={{ fontSize: 22 }}>備註</Text>
                         </View>
                         <TextInput
@@ -492,45 +503,45 @@ export default class EditMenu extends React.Component {
                             style={{ paddingHorizontal: 20, fontSize: 20, paddingTop: 5 }}
                         /> */}
 
-                        {/* <View style={styles.divider}>
+                            {/* <View style={styles.divider}>
                             <Divider />
                         </View> */}
 
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20, alignContent: "center" }}>
-                            <Text style={{ fontSize: 22, alignSelf: "center" }}>份數　{this.state.quantity}</Text>
-                            <UIStepper
-                                onValueChange={(quantity) => { this.setState({ quantity }) }}
-                                initialValue={this.state.quantity}
-                                minimumValue={1}
-                                maximumValue={99}
-                                tintColor="#6300ee"
-                                borderColor="#6300ee"
-                                height={40}
-                            />
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20, alignContent: "center" }}>
+                                <Text style={{ fontSize: 22, alignSelf: "center" }}>份數　{this.state.quantity}</Text>
+                                <UIStepper
+                                    onValueChange={(quantity) => { this.setState({ quantity }) }}
+                                    initialValue={this.state.quantity}
+                                    minimumValue={1}
+                                    maximumValue={99}
+                                    tintColor="#6300ee"
+                                    borderColor="#6300ee"
+                                    height={40}
+                                />
+                            </View>
+
+                            <View style={styles.divider}>
+                                <Divider />
+                            </View>
+
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20 }}>
+                                <Text style={{ fontSize: 25 }}>總價</Text>
+                                <Text style={{ fontSize: 25 }}>NT $ {((this.state.quantity) * (this.state.foodPrice)) + (this.state.extraFlavorPrice)}</Text>
+                            </View>
+
+
+
+                            <View style={styles.divider}>
+                                <Divider />
+                            </View>
+
+
+                            <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
+                                <Button disabled={(this.state.foodIsSoldOut || (!this.state.isStoreOpen))} style={{ elevation: 0 }} labelStyle={{ fontSize: 18 }} mode="contained" onPress={() => this._addToCartPress()}>加入購物車{(this.state.isStoreOpen) ? null : "(店家閉店中)"}</Button>
+                            </View>
                         </View>
-
-                        <View style={styles.divider}>
-                            <Divider />
-                        </View>
-
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20 }}>
-                            <Text style={{ fontSize: 25 }}>總價</Text>
-                            <Text style={{ fontSize: 25 }}>NT $ {((this.state.quantity) * (this.state.foodPrice)) + (this.state.extraFlavorPrice)}</Text>
-                        </View>
-
-
-
-                        <View style={styles.divider}>
-                            <Divider />
-                        </View>
-
-
-                        <View style={{ paddingHorizontal: 20, marginBottom:10 }}>
-                            <Button disabled={(this.state.foodIsSoldOut == 1)} style={{ elevation: 0 }} labelStyle={{ fontSize: 18 }} mode="contained" onPress={() => this._addToCartPress()}>加入購物車</Button>
-                        </View>
-                    </View>
-                </ScrollView>
-            </Root>
+                    </ScrollView>
+                </Root>
             </SafeAreaView>
         );
     }
@@ -560,7 +571,7 @@ const styles = StyleSheet.create({
         fontSize: 30,
         // paddingLeft: 20,
         // paddingTop: 10
-        alignSelf:"center"
+        alignSelf: "center"
     },
 
     nameAndPrice: {

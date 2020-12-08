@@ -111,7 +111,7 @@ export default class Analytics extends React.Component {
             fetch(address, {
                 method: 'GET',
                 headers: {
-                    "Authorization": ("Basic " + this.state.auth)
+                    "Authorization": ("Bearer " + this.state.auth)
                 }
             })
                 .then((response) => response.json())
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     },
     titleText: {
         fontSize: 30,
-        paddingLeft: 5,
+        paddingLeft: 10,
         paddingTop: 10
     },
 

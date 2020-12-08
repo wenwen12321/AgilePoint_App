@@ -7,10 +7,11 @@ import {
     Text,
     SafeAreaView
 } from 'react-native';
-import { IconButton, TextInput } from 'react-native-paper';
+import { IconButton, TextInput, Portal, Dialog, Button as PaperButton } from 'react-native-paper';
 import { Button, Shape } from 'react-native-material-ui';
 import { Actions } from 'react-native-router-flux';
 import serverInfo from '../ServerInfo';
+import { Dropdown } from 'react-native-material-dropdown';
 
 
 function OrderDetailItem(props) {
@@ -36,6 +37,42 @@ function OrderDetailItem(props) {
     )
 }
 
+// function handleAcceptance(id, setStatus = null, isDialogVisible = true) {
+//     let data = [];
+//     for (var i = 0; i <= 60; i += 5) {
+//         data.push({
+//             value: i + " 分鐘後",
+//             waitTime: i,
+//         })
+//     }
+//     var waitTime = 5;
+//     return (
+//         <Portal>
+//             <Dialog visible={isDialogVisible} onDismiss={() => isDialogVisible = false} >
+//                 <Dialog.Title>可取餐時間</Dialog.Title>
+//                 <Dialog.Content>
+//                     <Dropdown
+//                         label="多久後可取餐"
+//                         data={data}
+//                         value={data[1].value}
+//                         fontSize={15}
+//                         onChangeText={(value, index) => { waitTime = data[index].waitTime }}
+//                     />
+
+//                 </Dialog.Content>
+//                 <Dialog.Actions>
+//                     <Button onPress={() => isDialogVisible = false} >取消</Button>
+//                     <Button
+//                         onPress={() => {
+//                             console.log(waitTime);
+//                         }}
+//                     >確認</Button>
+//                 </Dialog.Actions>
+//             </Dialog>
+//         </Portal>
+//     )
+// }
+
 function renderButton(id, status, setStatus = null, deleteOrder = null, completeOrder, totalOrder) {
     switch (status) {
         case 0:
@@ -45,11 +82,15 @@ function renderButton(id, status, setStatus = null, deleteOrder = null, complete
                         <Button raised primary style={{ text: styles.buttonText }} text="  開始製作  " onPress={() => setStatus(id)} />
                         <Button raised accent style={{ text: styles.buttonText }} text="  拒絕接單  " onPress={() => deleteOrder(id)} />
                     </View>
-                    {(totalOrder) ?
-                        <Text>顧客取餐紀錄：{Math.round((completeOrder / totalOrder) * 10.0) / 10}%  ({completeOrder}/{totalOrder})</Text>
-                        :
-                        <Text>該顧客尚未有取餐紀錄</Text>
-                    }
+                    <View style={{ marginLeft: 20 }}>
+                        {(totalOrder) ?
+                            <Text style={{ marginVertical: 5 }}>顧客取餐紀錄：{Math.round((completeOrder / totalOrder) * 10.0) / 10 * 100}%  ({completeOrder}/{totalOrder})</Text>
+                            :
+                            <Text style={{ marginVertical: 5 }}>該顧客尚未有取餐紀錄</Text>
+                        }
+                    </View>
+
+
 
                 </>
             )
@@ -93,10 +134,24 @@ export default class OrderDetail extends React.Component {
             orderMemo: "",
             totalOrder: 0,
             completeOrder: 0,
+            isDialogVisible: false,
+            waitTime: 5,
+            waitTimeText: "5 分鐘後",
+            data: [],
+            storeID: props.storeID,
+            estimatedTime: null,
+            orderNumber: 0,
         }
     };
 
     componentDidMount() {
+        let data = [];
+        for (var i = 0; i <= 60; i += 5) {
+            data.push({
+                value: i.toString() + " 分鐘後",
+                waitTime: i,
+            })
+        }
 
         var address = serverInfo.SERVICE_ADDRESS;
         address += ("store/" + this.state.id + "/orders/detail");
@@ -104,7 +159,7 @@ export default class OrderDetail extends React.Component {
         fetch(address, {
             method: 'GET',
             headers: {
-                "Authorization": ("Basic " + this.state.auth),
+                "Authorization": ("Bearer " + this.state.auth),
             }
         })
             .then((response) => response.json())
@@ -118,11 +173,38 @@ export default class OrderDetail extends React.Component {
                     orderMemo: responseJson.orderMemo,
                     totalOrder: responseJson.totalOrder,
                     completeOrder: responseJson.completeOrder,
+                    data: data,
+                    estimatedTime: responseJson.estimatedTime,
+                    orderNumber: responseJson.orderNumber,
                 });
             })
             .catch((error) => {
                 console.log(error);
             });
+        
+        if(this.state.status!==3){
+
+            address = serverInfo.SERVICE_ADDRESS;
+            address += (this.state.storeID + "/storeInfo");
+            console.log(address);
+            fetch(address, {
+                method: 'GET',
+                headers: {
+                    "Authorization": ("Bearer " + this.state.auth),
+                }
+            })
+            .then((response) => response.json())
+            .then((responseJson) => {
+                console.log(responseJson);
+                this.setState({
+                    waitTime: responseJson.offset,
+                    waitTimeText: responseJson.offset.toString() + " 分鐘後",
+                });
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+        }
     }
 
     updateData() {
@@ -133,7 +215,7 @@ export default class OrderDetail extends React.Component {
             fetch(address, {
                 method: 'GET',
                 headers: {
-                    "Authorization": ("Basic " + this.state.auth),
+                    "Authorization": ("Bearer " + this.state.auth),
                 }
             })
                 .then((response) => response.json())
@@ -147,6 +229,30 @@ export default class OrderDetail extends React.Component {
                         orderMemo: orderMemo,
                         totalOrder: responseJson.totalOrder,
                         completeOrder: responseJson.completeOrder,
+                        estimatedTime: responseJson.estimatedTime,
+                        orderNumber: responseJson.orderNumber,
+                    });
+                })
+                .catch((error) => {
+                    console.log(error);
+                })
+
+
+            address = serverInfo.SERVICE_ADDRESS;
+            address += (this.state.storeID + "/storeInfo");
+            console.log(address);
+            fetch(address, {
+                method: 'GET',
+                headers: {
+                    "Authorization": ("Bearer " + this.state.auth),
+                }
+            })
+                .then((response) => response.json())
+                .then((responseJson) => {
+                    console.log(responseJson);
+                    this.setState({
+                        waitTime: responseJson.offset,
+                        waitTimeText: responseJson.offset.toString() + " 分鐘後",
                     });
                 })
                 .catch((error) => {
@@ -160,6 +266,64 @@ export default class OrderDetail extends React.Component {
         }
     }
 
+    handleAcceptanceButtonPress = () => {
+        if (this.state.estimatedTime === "0000-00-00 00:00:00") {
+            this.setState({ isDialogVisible: true })
+        }
+        else {
+            this.state.setStatus(this.state.id);
+        }
+    }
+
+    renderButton = (id, status, setStatus = null, deleteOrder = null, completeOrder, totalOrder) => {
+        switch (status) {
+            case 0:
+                return (
+                    <>
+                        <View style={styles.button}>
+                            <Button raised primary style={{ text: styles.buttonText }} text="  開始製作  " onPress={() => this.handleAcceptanceButtonPress()} />
+                            <Button raised accent style={{ text: styles.buttonText }} text="  拒絕接單  " onPress={() => deleteOrder(id)} />
+                        </View>
+                        <View style={{ marginLeft: 20 }}>
+                            {(totalOrder) ?
+                                <Text style={{ marginVertical: 5 }}>顧客取餐紀錄：{Math.round((completeOrder / totalOrder) * 10.0) / 10 * 100}%  ({completeOrder}/{totalOrder})</Text>
+                                :
+                                <Text style={{ marginVertical: 5 }}>該顧客尚未有取餐紀錄</Text>
+                            }
+                        </View>
+                    </>
+                )
+                break;
+
+            case 1:
+                return (
+                    <View style={styles.button}>
+                        <Button raised primary style={{ text: styles.buttonText }} text="      餐點完成      " onPress={() => setStatus(id)} />
+                    </View>
+                )
+                break;
+
+            case 2:
+                return (
+                    <View style={styles.button}>
+                        <Button raised primary style={{ text: styles.buttonText }} text="     顧客已取餐     " onPress={() => setStatus(id)} />
+                    </View>
+                )
+                break;
+
+            default:
+                null;
+        }
+    }
+
+    handleAcceptance = () => {
+        this.state.setStatus(this.state.id, this.state.waitTime);
+
+        this.setState({
+            isDialogVisible: false,
+        })
+    }
+
     render() {
 
         const goBack = () => {
@@ -171,13 +335,19 @@ export default class OrderDetail extends React.Component {
                 <ScrollView>
                     <View style={styles.main}>
                         {this.updateData()}
-                        <IconButton icon="arrow-left" size={30} color="#676767" onPress={() => goBack} />
+                        <IconButton style={{ margin: -5, padding: 0 }} icon="arrow-left" size={30} color="#676767" onPress={goBack} />
                         {/* <Text style={styles.popText} onPress={goBack}> X </Text> */}
 
                         <View style={styles.header}>
-                            <Text style={styles.idText}>#{this.state.id}</Text>
-                            <Text style={styles.dateText}>{this.state.orderDate}</Text>
+                            <Text style={styles.idText}>#{this.state.orderNumber}</Text>
+                            <Text adjustsFontSizeToFit={true} style={styles.dateText}>{this.state.orderDate}</Text>
                         </View>
+
+                        {(this.state.estimatedTime !== "0000-00-00 00:00:00") ?
+                            <Text adjustsFontSizeToFit={true} style={{ color: "#e49336", fontSize:18, marginBottom:5, alignContent:"center" }}>預計取餐時間：{this.state.estimatedTime}</Text>
+                            :
+                            null
+                        }
 
                         <View style={styles.orderDetailItemTitle}>
                             <Text style={styles.font}>品項</Text>
@@ -217,9 +387,31 @@ export default class OrderDetail extends React.Component {
                             <Text style={{ color: "#4a4a4a" }}>(總價格包含口味加價項)</Text>
                         </View>
 
-                        {renderButton(this.state.id, this.state.status, this.state.setStatus, this.state.deleteOrder, this.state.completeOrder, this.state.totalOrder)}
+                        {this.renderButton(this.state.id, this.state.status, this.state.setStatus, this.state.deleteOrder, this.state.completeOrder, this.state.totalOrder)}
 
                     </View>
+
+                    <Portal>
+                        <Dialog visible={this.state.isDialogVisible} onDismiss={() => this.setState({ isDialogVisible: false })} >
+                            <Dialog.Title>可取餐時間</Dialog.Title>
+                            <Dialog.Content>
+                                <Dropdown
+                                    label="多久後可取餐"
+                                    data={this.state.data}
+                                    value={this.state.waitTimeText}
+                                    fontSize={15}
+                                    onChangeText={(value, index) => { this.setState({ waitTime: this.state.data[index].waitTime, waitTimeText: this.state.data[index].value }) }}
+                                />
+
+                            </Dialog.Content>
+                            <Dialog.Actions>
+                                <PaperButton onPress={() => this.setState({ isDialogVisible: false })} >取消</PaperButton>
+                                <PaperButton
+                                    onPress={() => { this.handleAcceptance() }}
+                                >確認</PaperButton>
+                            </Dialog.Actions>
+                        </Dialog>
+                    </Portal>
                 </ScrollView>
             </SafeAreaView>
         )

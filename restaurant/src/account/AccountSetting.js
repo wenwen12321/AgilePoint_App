@@ -9,6 +9,7 @@ import {
     Image,
     AppRegistry,
     AsyncStorage,
+    TouchableOpacity
 } from 'react-native';
 
 import { Container, Header, Content, Tab, Tabs, ScrollableTab } from 'native-base';
@@ -29,6 +30,8 @@ export default class AccountSetting extends React.Component {
             auth: null,
             imageUri: "",
             userID: null,
+            role: null,
+            storeName: null,
         }
     }
 
@@ -51,6 +54,7 @@ export default class AccountSetting extends React.Component {
             await AsyncStorage.removeItem('@User:username');
             await AsyncStorage.removeItem('@User:email');
             await AsyncStorage.removeItem('@User:avatar');
+            await AsyncStorage.removeItem('@User:role');
         } catch (error) {
             console.log(error);
         } finally {
@@ -62,12 +66,13 @@ export default class AccountSetting extends React.Component {
         try {
             const value = await AsyncStorage.getItem('@User:loginStatus');
             const username = await AsyncStorage.getItem('@User:username');
-            console.log('username:'+username);
+            console.log('username:' + username);
             const storeID = await AsyncStorage.getItem('@User:storeID');
             const email = await AsyncStorage.getItem('@User:email');
             const auth = await AsyncStorage.getItem('@User:authorization');
             const imageUri = await AsyncStorage.getItem('@User:avatar');
             const userID = await AsyncStorage.getItem('@User:userID');
+            const role = await AsyncStorage.getItem('@User:role');
             if (value !== null) {
                 console.log(username);
                 setTimeout(() => {
@@ -78,10 +83,12 @@ export default class AccountSetting extends React.Component {
                         email: email,
                         auth: auth,
                         imageUri: ServerInfo.STORAGE_ADDRESS + "avatar/" + imageUri,
-                        userID: userID
+                        userID: userID,
+                        role: role
                     });
                 }, 0);
             }
+            this.getStoreInfo(storeID, auth);
         } catch (error) {
             console.log(error)
         }
@@ -91,12 +98,33 @@ export default class AccountSetting extends React.Component {
         this.getStorage().done();
     }
 
+    getStoreInfo = (storeID, auth) => {
+        var address = ServerInfo.SERVICE_ADDRESS;
+        address += (storeID + "/storeInfo");
+        console.log(address);
+        fetch(address, {
+            method: 'GET',
+        })
+            .then((response) => response.json())
+            .then((responseJson) => {
+                console.log(responseJson);
+                setTimeout(() => {
+                    this.setState({
+                        storeName: responseJson.storeName
+                    });
+                }, 0)
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
+
     renderGreeting = () => {
         if (this.state.id !== null) {
             return (
                 <View style={styles.greeting}>
                     <Text style={{ color: "#fff", fontSize: 30 }}>{this.state.id}</Text>
-                    <Text style={{ color: "#fff" }}>您管理的餐廳ID為:{this.state.storeID}</Text>
+                    <Text style={{ color: "#fff" }}>您管理的餐廳為:{this.state.storeName}</Text>
                 </View>
             )
         }
@@ -152,7 +180,7 @@ export default class AccountSetting extends React.Component {
                         </View>
                     </TouchableRipple>
                     <Divider />
-                    <TouchableRipple onPress={() => { Actions.changePassword({ email: this.state.email, auth: this.state.auth }) }} rippleColor="rgba(0,0,0,0.2)">
+                    {/* <TouchableRipple onPress={() => { Actions.changePassword({ email: this.state.email, auth: this.state.auth }) }} rippleColor="rgba(0,0,0,0.2)">
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                             <View style={{ margin: 10, alignItems: "center", flexDirection: "row" }}>
                                 <Icon style={{ marginRight: 10 }} color="#272acb" size={30} name="key-outline" />
@@ -161,17 +189,24 @@ export default class AccountSetting extends React.Component {
                             <Icon style={{ marginRight: 10, alignSelf: "center" }} color="#575757" size={30} name="chevron-right" />
                         </View>
                     </TouchableRipple>
-                    <Divider />
-                    <TouchableRipple onPress={() => { Actions.addManager({ storeID: this.state.storeID, auth: this.state.auth }) }} rippleColor="rgba(0,0,0,0.2)">
-                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                            <View style={{ margin: 10, alignItems: "center", flexDirection: "row" }}>
-                                <Icon style={{ marginRight: 10 }} color="#e5bc21" size={30} name="account-plus-outline" />
-                                <Text style={{ fontSize: 18 }}>新增餐廳管理者</Text>
-                            </View>
-                            <Icon style={{ marginRight: 10, alignSelf: "center" }} color="#575757" size={30} name="chevron-right" />
-                        </View>
-                    </TouchableRipple>
-                    <Divider />
+                    <Divider /> */}
+                    {(this.state.role === "3") ?
+                        <>
+                            <TouchableRipple onPress={() => { Actions.addManager({ storeID: this.state.storeID, auth: this.state.auth }) }} rippleColor="rgba(0,0,0,0.2)">
+                                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                                    <View style={{ margin: 10, alignItems: "center", flexDirection: "row" }}>
+                                        <Icon style={{ marginRight: 10 }} color="#e5bc21" size={30} name="account-plus-outline" />
+                                        <Text style={{ fontSize: 18 }}>新增餐廳管理者</Text>
+                                    </View>
+                                    <Icon style={{ marginRight: 10, alignSelf: "center" }} color="#575757" size={30} name="chevron-right" />
+                                </View>
+                            </TouchableRipple>
+                            <Divider />
+                        </>
+                        :
+                        <></>
+                    }
+
                     <TouchableRipple onPress={() => Actions.changeStoreInfo({ storeID: this.state.storeID, auth: this.state.auth })} rippleColor="rgba(0,0,0,0.2)">
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                             <View style={{ margin: 10, alignItems: "center", flexDirection: "row" }}>
@@ -182,7 +217,7 @@ export default class AccountSetting extends React.Component {
                         </View>
                     </TouchableRipple>
                     <Divider />
-                    <TouchableRipple onPress={() => Actions.accountManagement({ userID: this.state.userID, auth: this.state.auth, userName:this.state.id, imageUri: this.state.imageUri, email: this.state.email})} rippleColor="rgba(0,0,0,0.2)">
+                    <TouchableRipple onPress={() => Actions.accountManagement({ userID: this.state.userID, auth: this.state.auth, userName: this.state.id, imageUri: this.state.imageUri, email: this.state.email })} rippleColor="rgba(0,0,0,0.2)">
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                             <View style={{ margin: 10, alignItems: "center", flexDirection: "row" }}>
                                 <Icon style={{ marginRight: 10 }} color="#4e80ff" size={30} name="account-box-outline" />
@@ -205,44 +240,45 @@ export default class AccountSetting extends React.Component {
             //     <Text style={styles.greeting}>您好, {this.state.id}!</Text>
             //     {this.renderLogoutButton()}
             // </View>
-            <SafeAreaView style={{flex:1}}>
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                {/* <Text style={styles.titleText}>帳戶</Text> */}
-                {/*<PersonalProfile />*/}
-                <View style={{ justifyContent: "space-between", flex: 1 }}>
-                    <View>
-                        <LinearGradient colors={['#ea7847', '#f7a15d']}>
-                            <View style={{ flexDirection: "row", alignContent: "center", alignItems: "center" }}>
-                                <TouchableRipple
-                                    rippleColor="rgba(0,0,0,0.2)"
-                                    style={{
-                                        borderWidth: 1,
-                                        borderColor: 'rgba(0,0,0,0)',
-                                        alignItems: 'center',
-                                        alignSelf: "center",
-                                        justifyContent: 'center',
-                                        width: 60,
-                                        height: 60,
-                                        backgroundColor: '#c3c3c3',
-                                        borderRadius: 50,
-                                        alignSelf: "center",
-                                        marginLeft: 10
-                                    }}
-                                >
-                                    {(this.state.imageUri) ?
-                                        <Image style={{ alignSelf: "center", width: 60, height: 60, borderRadius: 50, resizeMode: "cover" }} source={{ uri: this.state.imageUri }} />
-                                        :
-                                        <Icon style={{ alignSelf: "center" }} name="account" size={50} color="#fff" />
-                                    }
-                                </TouchableRipple>
-                                {this.renderGreeting()}
-                            </View>
-                        </LinearGradient>
-                        {this.renderSettingButton()}
+            <SafeAreaView style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                    {/* <Text style={styles.titleText}>帳戶</Text> */}
+                    {/*<PersonalProfile />*/}
+                    <View style={{ justifyContent: "space-between", flex: 1 }}>
+                        <View>
+                            <LinearGradient colors={['#ea7847', '#f7a15d']}>
+                                <View style={{ flexDirection: "row", alignContent: "center", alignItems: "center" }}>
+                                    <TouchableOpacity
+                                        rippleColor="rgba(0,0,0,0.2)"
+                                        style={{
+                                            borderWidth: 1,
+                                            borderColor: 'rgba(0,0,0,0)',
+                                            alignItems: 'center',
+                                            alignSelf: "center",
+                                            justifyContent: 'center',
+                                            width: 60,
+                                            height: 60,
+                                            backgroundColor: '#c3c3c3',
+                                            borderRadius: 50,
+                                            alignSelf: "center",
+                                            marginLeft: 10
+                                        }}
+                                        onPress={() => Actions.accountManagement({ userID: this.state.userID, auth: this.state.auth, userName: this.state.id, imageUri: this.state.imageUri, email: this.state.email })}
+                                    >
+                                        {(this.state.imageUri) ?
+                                            <Image style={{ alignSelf: "center", width: 60, height: 60, borderRadius: 50, resizeMode: "cover" }} source={{ uri: this.state.imageUri }} />
+                                            :
+                                            <Icon style={{ alignSelf: "center" }} name="account" size={50} color="#fff" />
+                                        }
+                                    </TouchableOpacity>
+                                    {this.renderGreeting()}
+                                </View>
+                            </LinearGradient>
+                            {this.renderSettingButton()}
+                        </View>
+                        {this.renderLogoutButton()}
                     </View>
-                    {this.renderLogoutButton()}
-                </View>
-            </ScrollView>
+                </ScrollView>
             </SafeAreaView>
 
         );

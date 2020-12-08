@@ -7,7 +7,7 @@ import {
     Text,
     SafeAreaView
 } from 'react-native';
-import { TextInput } from 'react-native-paper';
+import { IconButton, TextInput } from 'react-native-paper';
 import { Button, Shape } from 'react-native-material-ui';
 import { Actions } from 'react-native-router-flux';
 import serverInfo from './ServerInfo.js';
@@ -26,7 +26,7 @@ function OrderDetailItem(props) {
             </View>
             <View style={{ marginLeft: 15 }}>
                 {props.flavors.map((flavor) => (
-                    <View style={{ flexDirection: "row"}}>
+                    <View style={{ flexDirection: "row" }}>
                         <Text style={{ fontSize: 14, color: "#696969" }}>- {flavor.flavorType}：{flavor.flavor}{(flavor.extraPrice > 0) ? (" + $" + flavor.extraPrice) : ("")}</Text>
                     </View>
                 ))}
@@ -55,6 +55,8 @@ export default class OrderDetail extends React.Component {
             orderPrice: 0,
             auth: props.auth,
             orderMemo: "",
+            estimatedTime: "",
+            orderNumber: 0,
         }
     };
 
@@ -66,7 +68,7 @@ export default class OrderDetail extends React.Component {
         fetch(address, {
             method: 'GET',
             headers: {
-                "Authorization": ("Basic " + this.state.auth)
+                "Authorization": ("Bearer " + this.state.auth)
             }
         })
             .then((response) => response.json())
@@ -79,6 +81,8 @@ export default class OrderDetail extends React.Component {
                     orderItems: responseJson.orderItems,
                     orderPrice: responseJson.orderPrice,
                     orderMemo: responseJson.orderMemo,
+                    estimatedTime: responseJson.estimatedTime,
+                    orderNumber: responseJson.orderNumber,
                 })
             })
             .catch((error) => {
@@ -93,58 +97,69 @@ export default class OrderDetail extends React.Component {
         };
 
         return (
-            <SafeAreaView style={{flex:1}}>
-            <View style={styles.main}>
-                <Text style={styles.popText} onPress={goBack}> X </Text>
+            <SafeAreaView style={{ flex: 1 }}>
+                <View style={styles.main}>
+                    <IconButton style={{ margin: -5, padding: 0 }} icon="arrow-left" size={30} color="#676767" onPress={goBack} />
+                    {/* <Text style={styles.popText} onPress={goBack}> X </Text> */}
 
-                <View>
-                    <Text style={styles.storeName}>{this.state.store}</Text>
+                    <View>
+                        <Text style={styles.storeName}>{this.state.store}</Text>
+                    </View>
+
+                    <View style={styles.header}>
+                        <Text style={styles.idText}>#{this.state.orderNumber}</Text>
+                        {/* <Text style={styles.dateText}>{this.state.orderDate}</Text> */}
+                    </View>
+
+                    <View style={{ marginVertical: 10 }}>
+                        <Text>下單時間：<Text style={styles.dateText}>{this.state.orderDate}</Text></Text>
+                        {!(this.state.estimatedTime === "0000-00-00 00:00:00") ?
+                            <Text>取餐時間：<Text style={styles.dateText}>{this.state.estimatedTime}</Text></Text>
+                            :
+                            <Text>取餐時間：<Text style={styles.dateText}>沒有資料</Text></Text>
+
+                        }
+                    </View>
+
+                    <View style={styles.orderDetailItemTitle}>
+                        <Text style={styles.font}>品項</Text>
+                        <Text style={{ flexGrow: 1 }} />
+                        <Text style={{ flexGrow: 1 }} />
+                        <Text style={styles.font}>數量</Text>
+                        <Text style={{ flexGrow: 1 }} />
+                        <Text style={styles.font}>單價</Text>
+                    </View>
+
+                    <View style={styles.orderDetailItemList}>
+                        {this.state.orderItems.map(item => (
+                            <OrderDetailItem
+                                key={item.id}
+                                name={item.name}
+                                memo={item.memo}
+                                quantity={item.quantity}
+                                mealPrice={item.mealPrice}
+                                flavors={item.flavors}
+                            />
+                        ))}
+                    </View>
+
+                    <Text style={styles.font}>備註 : </Text>
+                    <TextInput
+                        mode="outlined"
+                        multiline={true}
+                        numberOfLines={4}
+                        // style={styles.remark}
+                        // underlineColorAndroid='transparent'
+                        editable={false}
+                        value={this.state.orderMemo}
+                    />
+
+                    <View style={styles.price}>
+                        <Text style={styles.priceText}>總價格 $ {this.state.orderPrice}</Text>
+                        <Text>(總價格包含口味加價項)</Text>
+                    </View>
+
                 </View>
-
-                <View style={styles.header}>
-                    <Text style={styles.idText}>#{this.state.id}</Text>
-                    <Text style={styles.dateText}>{this.state.orderDate}</Text>
-                </View>
-
-                <View style={styles.orderDetailItemTitle}>
-                    <Text style={styles.font}>品項</Text>
-                    <Text style={{ flexGrow: 1 }} />
-                    <Text style={{ flexGrow: 1 }} />
-                    <Text style={styles.font}>數量</Text>
-                    <Text style={{ flexGrow: 1 }} />
-                    <Text style={styles.font}>單價</Text>
-                </View>
-
-                <View style={styles.orderDetailItemList}>
-                    {this.state.orderItems.map(item => (
-                        <OrderDetailItem
-                            key={item.id}
-                            name={item.name}
-                            memo={item.memo}
-                            quantity={item.quantity}
-                            mealPrice={item.mealPrice}
-                            flavors={item.flavors}
-                        />
-                    ))}
-                </View>
-
-                <Text style={styles.font}>備註 : </Text>
-                <TextInput
-                    mode="outlined"
-                    multiline={true}
-                    numberOfLines={4}
-                    // style={styles.remark}
-                    // underlineColorAndroid='transparent'
-                    editable={false}
-                    value={this.state.orderMemo}
-                />
-
-                <View style={styles.price}>
-                    <Text style={styles.priceText}>總價格 $ {this.state.orderPrice}</Text>
-                    <Text>(總價格包含口味加價項)</Text>
-                </View>
-
-            </View>
             </SafeAreaView>
         )
     }
@@ -161,7 +176,7 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingBottom: 20,
+        // paddingBottom: 10,
         paddingTop: 10,
     },
 
@@ -183,7 +198,7 @@ const styles = StyleSheet.create({
 
     price: {
         // flexDirection: 'row',
-        alignItems:"flex-end",
+        alignItems: "flex-end",
         justifyContent: 'flex-end',
         padding: 10
     },
@@ -197,7 +212,6 @@ const styles = StyleSheet.create({
     },
 
     dateText: {
-        fontSize: 25,
         color: "#A9A9A9"
     },
 

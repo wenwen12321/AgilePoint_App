@@ -25,6 +25,7 @@ import ForgetPassword from './src/login/ForgetPassword';
 import RegisterSuccess from './src/login/RegisterSuccess';
 import Analytics from './src/analytics/Analytics';
 import AppRouter from './src/AppRouter';
+import {Root} from 'native-base';
 
 const Routes = (props) => (
     <Router>
@@ -54,13 +55,15 @@ export default class App extends React.Component {
     render() {
         return (
             <PaperProvider>
-                <View style={styles.container}>
-                    <AppRouter />
-                    {/* <Routes />
+                    <Root>
+                    <View style={styles.container}>
+                        <AppRouter />
+                        {/* <Routes />
                     <View style={styles.footer}>
                         <BottomBar />
                     </View> */}
-                </View>
+                    </View>
+                </Root>
             </PaperProvider>
         )
     }

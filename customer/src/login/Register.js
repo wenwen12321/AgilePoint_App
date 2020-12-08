@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
-import { View, TouchableOpacity, StyleSheet, Alert, Image, ImageBackground, TouchableHighlight, ScrollView, RefreshControl, SafeAreaView } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Alert, Image, ImageBackground, TouchableHighlight, ScrollView, RefreshControl, SafeAreaView, Platform } from 'react-native';
 import { TextInput, Divider, Text, Switch, Button, Chip, IconButton } from 'react-native-paper';
 import { Actions } from 'react-native-router-flux';
 import serverInfo from '../ServerInfo';
 import { Toast, Root } from 'native-base';
+import FlagSecure from 'react-native-flag-secure-android';
+import { usePrivacySnapshot, enabled } from 'react-native-privacy-snapshot';
+import * as ScreenshotDetector from 'react-native-screenshot-detect';
 
 export default class Register extends React.Component {
     constructor(props) {
@@ -21,6 +24,24 @@ export default class Register extends React.Component {
             phoneError: "",
             previous: this.props.previous,
             isLoading: false,
+        }
+    }
+
+    componentDidMount() {
+        if (Platform.OS === "android") {
+            FlagSecure.activate();
+        }
+        else if (Platform.OS === "ios") {
+            enabled(true);
+            this.eventEmitter = ScreenshotDetector.subscribe(() => {
+                Alert.alert(
+                    "截圖告示",
+                    "剛剛已使用截圖功能，由於內容可能含有個人資料，請妥善保管截圖內容，謝謝",
+                    [
+                        { text: "好", onPress: () => { console.log("OK Pressed") } }
+                    ]
+                )
+            });
         }
     }
 
@@ -140,95 +161,95 @@ export default class Register extends React.Component {
 
     render() {
         return (
-            <SafeAreaView style={{flex:1}}>
-            <ScrollView
-                contentContainerStyle={{ flexGrow: 1 }}
-                refreshControl={
-                    <RefreshControl refreshing={this.state.isLoading} />
-                }
-            >
-                <IconButton icon="arrow-left" size={30} color="#676767" onPress={() => { Actions.pop() }} />
-                <View style={{ flex: 1, padding: 10, justifyContent: "center" }}>
-                    <Text style={styles.title}>建立一個帳號</Text>
-                    <View style={{ marginBottom: 10 }}>
-                        <TextInput
-                            mode="outlined"
-                            label="使用者名稱"
-                            returnKeyType="next"
-                            error={!!this.state.usernameError}
-                            value={this.state.username}
-                            onChangeText={text => this.setState({ username: text })}
-                        />
-                        {this.state.usernameError ? <Text style={styles.error}>{this.state.usernameError}</Text> : null}
-                    </View>
-                    <View style={{ marginBottom: 10 }}>
-                        <TextInput
-                            mode="outlined"
-                            label="Email(限學校信箱)"
-                            returnKeyType="next"
-                            value={this.state.email}
-                            onChangeText={text => this.setState({ email: text })}
-                            autoCapitalize="none"
-                            autoCompleteType="email"
-                            textContentType="emailAddress"
-                            keyboardType="email-address"
-                            error={!!this.state.emailError}
-                        />
-                        {this.state.emailError ? <Text style={styles.error}>{this.state.emailError}</Text> : null}
-                    </View>
-                    <View style={{ marginBottom: 10 }}>
-                        <TextInput
-                            mode="outlined"
-                            label="電話"
-                            returnKeyType="next"
-                            value={this.state.phone}
-                            onChangeText={text => this.setState({ phone: text })}
-                            keyboardType="number-pad"
-                            error={!!this.state.phoneError}
-                        />
-                        {this.state.phoneError ? <Text style={styles.error}>{this.state.phoneError}</Text> : null}
+            <SafeAreaView style={{ flex: 1 }}>
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    refreshControl={
+                        <RefreshControl refreshing={this.state.isLoading} />
+                    }
+                >
+                    <IconButton icon="arrow-left" size={30} color="#676767" onPress={() => { Actions.pop() }} />
+                    <View style={{ flex: 1, padding: 10, justifyContent: "center" }}>
+                        <Text style={styles.title}>建立一個帳號</Text>
+                        <View style={{ marginBottom: 10 }}>
+                            <TextInput
+                                mode="outlined"
+                                label="使用者名稱"
+                                returnKeyType="next"
+                                error={!!this.state.usernameError}
+                                value={this.state.username}
+                                onChangeText={text => this.setState({ username: text })}
+                            />
+                            {this.state.usernameError ? <Text style={styles.error}>{this.state.usernameError}</Text> : null}
+                        </View>
+                        <View style={{ marginBottom: 10 }}>
+                            <TextInput
+                                mode="outlined"
+                                label="Email(限學校信箱)"
+                                returnKeyType="next"
+                                value={this.state.email}
+                                onChangeText={text => this.setState({ email: text })}
+                                autoCapitalize="none"
+                                autoCompleteType="email"
+                                textContentType="emailAddress"
+                                keyboardType="email-address"
+                                error={!!this.state.emailError}
+                            />
+                            {this.state.emailError ? <Text style={styles.error}>{this.state.emailError}</Text> : null}
+                        </View>
+                        <View style={{ marginBottom: 10 }}>
+                            <TextInput
+                                mode="outlined"
+                                label="電話"
+                                returnKeyType="next"
+                                value={this.state.phone}
+                                onChangeText={text => this.setState({ phone: text })}
+                                keyboardType="number-pad"
+                                error={!!this.state.phoneError}
+                            />
+                            {this.state.phoneError ? <Text style={styles.error}>{this.state.phoneError}</Text> : null}
 
-                    </View>
+                        </View>
 
-                    <View style={{ marginBottom: 10 }}>
-                        <TextInput
-                            mode="outlined"
-                            label="密碼"
-                            placeholder="密碼(至少8個字元)"
-                            returnKeyType="next"
-                            autoCapitalize="none"
-                            value={this.state.password}
-                            onChangeText={text => this.setState({ password: text })}
-                            error={!!this.state.passwordError}
-                            secureTextEntry
-                        />
-                        {this.state.passwordError ? <Text style={styles.error}>{this.state.passwordError}</Text> : null}
+                        <View style={{ marginBottom: 10 }}>
+                            <TextInput
+                                mode="outlined"
+                                label="密碼"
+                                placeholder="密碼(至少8個字元)"
+                                returnKeyType="next"
+                                autoCapitalize="none"
+                                value={this.state.password}
+                                onChangeText={text => this.setState({ password: text })}
+                                error={!!this.state.passwordError}
+                                secureTextEntry
+                            />
+                            {this.state.passwordError ? <Text style={styles.error}>{this.state.passwordError}</Text> : null}
 
-                    </View>
-                    <View style={{ marginBottom: 10 }}>
-                        <TextInput
-                            mode="outlined"
-                            label="確認密碼"
-                            returnKeyType="done"
-                            autoCapitalize="none"
-                            value={this.state.confirmPassword}
-                            onChangeText={text => this.setState({ confirmPassword: text })}
-                            error={!!this.state.confirmPasswordError}
-                            secureTextEntry
-                        />
-                        {this.state.confirmPasswordError ? <Text style={styles.error}>{this.state.confirmPasswordError}</Text> : null}
+                        </View>
+                        <View style={{ marginBottom: 10 }}>
+                            <TextInput
+                                mode="outlined"
+                                label="確認密碼"
+                                returnKeyType="done"
+                                autoCapitalize="none"
+                                value={this.state.confirmPassword}
+                                onChangeText={text => this.setState({ confirmPassword: text })}
+                                error={!!this.state.confirmPasswordError}
+                                secureTextEntry
+                            />
+                            {this.state.confirmPasswordError ? <Text style={styles.error}>{this.state.confirmPasswordError}</Text> : null}
 
-                    </View>
+                        </View>
 
-                    <Button labelStyle={styles.labelText} style={styles.button} mode="contained" onPress={() => this.registerPress()}>註冊</Button>
-                    <View style={styles.row}>
-                        <Text style={{ color: "#878787" }}>已經有帳號了? </Text>
-                        <TouchableOpacity onPress={() => this.goToLoginPage()}>
-                            <Text style={{ fontWeight: "bold", color: "#8249d1" }}>登入</Text>
-                        </TouchableOpacity>
+                        <Button labelStyle={styles.labelText} style={styles.button} mode="contained" onPress={() => this.registerPress()}>註冊</Button>
+                        <View style={styles.row}>
+                            <Text style={{ color: "#878787" }}>已經有帳號了? </Text>
+                            <TouchableOpacity onPress={() => this.goToLoginPage()}>
+                                <Text style={{ fontWeight: "bold", color: "#8249d1" }}>登入</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
-            </ScrollView>
+                </ScrollView>
             </SafeAreaView>
         )
     }

@@ -1,9 +1,12 @@
-package com.customer;
+package com.hungryntust.customer;
 
 import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
+import com.staltz.flagsecure.FlagSecurePackage;
+//import com.kristiansorens.flagsecure.FlagSecurePackage;
+import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
 //import com.azendoo.reactnativesnackbar.SnackbarPackage;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;

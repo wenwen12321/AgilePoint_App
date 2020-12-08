@@ -75,14 +75,22 @@ export default class AppRouter extends React.Component {
         // ({ scene, jumpToIndex }) => { jumpToIndex(scene.index); }
     }
 
+    onBackPress = () => {
+        if (Actions.state.index === 0) {
+            return false
+        }
+        Actions.pop()
+        return true
+    }
+
     render() {
         return (
             <View style={styles.container}>
-                <Router>
+                <Router backAndroidHandler={this.onBackPress}>
                     <Scene key='root'>
                         <Scene tabBarOnPress={(props) => { this.resetScene(props) }} key='tabbar' tabs={true} tabBarStyle={styles.tabBar} showLabel={false} hideNavBar={true} >
                             <Scene key='mainPage' titleName="首頁" icon={TabIcon} iconName="home" hideNavBar={true} >
-                                <Scene key='main' component={Main} hideNavBar={true}/>
+                                <Scene key='main' component={Main} hideNavBar={true} />
                                 <Scene key='main2' component={Main2} hideNavBar={true} initial={true} />
                                 <Scene key='restaurantPage' component={RestaurantPage} hideNavBar={true} />
                                 <Scene key='mealDetail' component={MealDetail} hideNavBar={true} />

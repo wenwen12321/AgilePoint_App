@@ -65,7 +65,7 @@ function Order(props) {
                 </View>
 
                 <View style={styles.info}>
-                    <Text style={styles.font}>#{props.id}</Text>
+                    <Text style={styles.font}>#{props.orderNumber}</Text>
                     {/*<Text style={styles.font}>{props.orderDate}</Text>*/}
                     <Text style={styles.font}>{props.orderDate}</Text>
                 </View>
@@ -130,10 +130,17 @@ export default class CurrentOrderList extends React.Component {
             isLoggedIn: null,
             auth: null,
             userID: null,
+            timer: null,
         }
     };
 
     componentDidMount() {
+        this.getLoginSatus();
+        let timer = setInterval(this.tick, 20000);
+        this.setState({ timer });
+    }
+
+    tick = () => {
         this.getLoginSatus();
     }
 
@@ -174,7 +181,7 @@ export default class CurrentOrderList extends React.Component {
             fetch(address, {
                 method: 'GET',
                 headers: {
-                    "Authorization": ("Basic " + this.state.auth)
+                    "Authorization": ("Bearer " + this.state.auth)
                 }
             })
                 .then((response) => response.json())
@@ -212,6 +219,7 @@ export default class CurrentOrderList extends React.Component {
                         <Order
                             key={item.id}
                             id={item.id}
+                            orderNumber={item.orderNumber}
                             status={item.status}
                             store={item.store}
                             orderDate={item.orderDate}

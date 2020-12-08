@@ -21,10 +21,7 @@ import {
 
 import { Router, Scene } from 'react-native-router-flux';
 
-<<<<<<< HEAD
-=======
 import { Provider as PaperProvider } from 'react-native-paper';
->>>>>>> e4d5c74da093e9aaaa7ae0ac71085a2ef84bf223
 import BottomBar from './src/bottomBar/BottomBar';
 import Main from './src/main.js'
 import MealDetail from './src/MealDetail';

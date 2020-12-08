@@ -30,3 +30,17 @@ npm install native-base
 ```
 yarn add react-native-lightbox
 ```
+## for資安
+### [react-native-flag-secure-android](https://github.com/kristiansorens/react-native-flag-secure-android)
+```
+npm install react-native-flag-secure-android
+```
+### [react-native-privacy-snapshot](https://github.com/rhdeck/react-native-privacy-snapshot)
+> forked version
+```
+npm install rhdeck/react-native-privacy-snapshot
+```
+### [react-native-screenshot-detect](https://github.com/iamacup/react-native-screenshot-detect)
+```
+npm install react-native-screenshot-detect
+```

@@ -1,4 +1,4 @@
-package com.customer;
+package com.hungryntust.customer;
 
 import com.facebook.react.ReactActivity;
 
@@ -11,5 +11,10 @@ public class MainActivity extends ReactActivity {
   @Override
   protected String getMainComponentName() {
     return "customer";
+  }
+
+  @Override
+  public void invokeDefaultOnBackPressed() {
+    moveTaskToBack(true);
   }
 }
